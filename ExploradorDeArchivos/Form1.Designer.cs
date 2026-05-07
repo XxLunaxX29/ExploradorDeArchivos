@@ -1,6 +1,4 @@
 ﻿using System.Windows.Forms;
-using System.Xml.Linq;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace ExploradorDeArchivos
 {
@@ -14,7 +12,7 @@ namespace ExploradorDeArchivos
         /// <summary>
         ///  Clean up any resources being used.
         /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        /// <param name="disposing">true if managed resources being disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -28,7 +26,7 @@ namespace ExploradorDeArchivos
 
         /// <summary>
         ///  Required method for Designer support - do not modify
-        ///  the contents of this method with the code editor.
+        ///  the contents of this method by code editor.
         /// </summary>
         private void InitializeComponent()
         {
@@ -41,8 +39,13 @@ namespace ExploradorDeArchivos
             btnDrives = new Button();
             dataGridView1 = new DataGridView();
             dataGridView2 = new DataGridView();
+            panelQuickAccess = new Panel();
+            lblQuickAccess = new Label();
+            listBoxShortcuts = new ListBox();
+            splitter1 = new Splitter();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dataGridView2).BeginInit();
+            panelQuickAccess.SuspendLayout();
             SuspendLayout();
             // 
             // imageList1
@@ -97,13 +100,13 @@ namespace ExploradorDeArchivos
             // dataGridView1
             // 
             dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridView1.Location = new Point(12, 109);
+            dataGridView1.Location = new Point(185, 71);
             dataGridView1.MultiSelect = false;
             dataGridView1.Name = "dataGridView1";
             dataGridView1.ReadOnly = true;
             dataGridView1.RowHeadersWidth = 51;
             dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dataGridView1.Size = new Size(729, 516);
+            dataGridView1.Size = new Size(689, 554);
             dataGridView1.TabIndex = 11;
             // 
             // dataGridView2
@@ -111,22 +114,62 @@ namespace ExploradorDeArchivos
             dataGridView2.AllowUserToAddRows = false;
             dataGridView2.AllowUserToDeleteRows = false;
             dataGridView2.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridView2.Location = new Point(757, 109);
+            dataGridView2.Location = new Point(880, 71);
             dataGridView2.MultiSelect = false;
             dataGridView2.Name = "dataGridView2";
             dataGridView2.ReadOnly = true;
             dataGridView2.RowHeadersWidth = 51;
             dataGridView2.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dataGridView2.Size = new Size(404, 516);
+            dataGridView2.Size = new Size(446, 554);
             dataGridView2.TabIndex = 12;
+            // 
+            // panelQuickAccess
+            // 
+            panelQuickAccess.BackColor = SystemColors.Control;
+            panelQuickAccess.BorderStyle = BorderStyle.FixedSingle;
+            panelQuickAccess.Controls.Add(lblQuickAccess);
+            panelQuickAccess.Controls.Add(listBoxShortcuts);
+            panelQuickAccess.Location = new Point(12, 71);
+            panelQuickAccess.Name = "panelQuickAccess";
+            panelQuickAccess.Size = new Size(167, 554);
+            panelQuickAccess.TabIndex = 13;
+            // 
+            // lblQuickAccess
+            // 
+            lblQuickAccess.AutoSize = true;
+            lblQuickAccess.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblQuickAccess.Location = new Point(8, 8);
+            lblQuickAccess.Name = "lblQuickAccess";
+            lblQuickAccess.Size = new Size(111, 20);
+            lblQuickAccess.TabIndex = 1;
+            lblQuickAccess.Text = "Acceso Rápido";
+            // 
+            // listBoxShortcuts
+            // 
+            listBoxShortcuts.BorderStyle = BorderStyle.None;
+            listBoxShortcuts.FormattingEnabled = true;
+            listBoxShortcuts.Location = new Point(8, 31);
+            listBoxShortcuts.Name = "listBoxShortcuts";
+            listBoxShortcuts.Size = new Size(151, 520);
+            listBoxShortcuts.TabIndex = 0;
+            // 
+            // splitter1
+            // 
+            splitter1.Location = new Point(0, 0);
+            splitter1.Name = "splitter1";
+            splitter1.Size = new Size(4, 637);
+            splitter1.TabIndex = 14;
+            splitter1.TabStop = false;
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1173, 637);
+            ClientSize = new Size(1338, 637);
+            Controls.Add(splitter1);
             Controls.Add(dataGridView2);
             Controls.Add(dataGridView1);
+            Controls.Add(panelQuickAccess);
             Controls.Add(btnDrives);
             Controls.Add(lblInfo);
             Controls.Add(txtPath);
@@ -136,6 +179,8 @@ namespace ExploradorDeArchivos
             Text = "Explorador de archivos";
             ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
             ((System.ComponentModel.ISupportInitialize)dataGridView2).EndInit();
+            panelQuickAccess.ResumeLayout(false);
+            panelQuickAccess.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -149,5 +194,9 @@ namespace ExploradorDeArchivos
         private Button btnDrives;
         private DataGridView dataGridView1;
         private DataGridView dataGridView2;
+        private Panel panelQuickAccess;
+        private Label lblQuickAccess;
+        private ListBox listBoxShortcuts;
+        private Splitter splitter1;
     }
 }

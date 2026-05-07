@@ -14,6 +14,9 @@ namespace ExploradorDeArchivos
 
         int idxVideo, idxMusic, idxText, idxFolder, idxOther, idxImage;
 
+        // Diccionario para mapear nombres de acceso rápido a rutas
+        private Dictionary<string, string> _shortcutPaths = new Dictionary<string, string>();
+
         public Form1()
         {
             InitializeComponent();
@@ -31,6 +34,10 @@ namespace ExploradorDeArchivos
 
             string userDocs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             LoadDirectory(userDocs);
+
+            // Configurar accesos rápidos
+            InitializeQuickAccess();
+
             // Eventos
             dataGridView1.CellDoubleClick += dataGridView1_CellDoubleClick;
             dataGridView1.SelectionChanged += dataGridView1_SelectionChanged;
@@ -38,7 +45,81 @@ namespace ExploradorDeArchivos
             btnBack.Click += btnBack_Click;
             btnDrives.Click += btnDrives_Click;
             txtPath.KeyDown += txtPath_KeyDown;
+            listBoxShortcuts.DoubleClick += ListBoxShortcuts_DoubleClick;
+        }
 
+        // ================= ACCESO RÁPIDO ==================
+        private void InitializeQuickAccess()
+        {
+            listBoxShortcuts.Items.Clear();
+            _shortcutPaths.Clear();
+
+            // Documentos
+            string docs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            if (Directory.Exists(docs))
+            {
+                _shortcutPaths.Add("Documentos", docs);
+                listBoxShortcuts.Items.Add(" Documentos");
+            }
+
+            // Descargas
+            string downloads = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+            if (Directory.Exists(downloads))
+            {
+                _shortcutPaths.Add("Descargas", downloads);
+                listBoxShortcuts.Items.Add("Descargas");
+            }
+
+            // Imágenes
+            string pictures = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
+            if (Directory.Exists(pictures))
+            {
+                _shortcutPaths.Add("Imágenes", pictures);
+                listBoxShortcuts.Items.Add("Imágenes");
+            }
+
+            // Música
+            string music = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
+            if (Directory.Exists(music))
+            {
+                _shortcutPaths.Add("Música", music);
+                listBoxShortcuts.Items.Add("Música");
+            }
+
+            // Vídeos
+            string videos = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
+            if (Directory.Exists(videos))
+            {
+                _shortcutPaths.Add("Vídeos", videos);
+                listBoxShortcuts.Items.Add("Vídeos");
+            }
+
+            // Escritorio
+            string desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            if (Directory.Exists(desktop))
+            {
+                _shortcutPaths.Add("Escritorio", desktop);
+                listBoxShortcuts.Items.Add("Escritorio");
+            }
+
+            // Este equipo
+            _shortcutPaths.Add("Este equipo", "DRIVES");
+            listBoxShortcuts.Items.Add("Este equipo");
+        }
+
+        private void ListBoxShortcuts_DoubleClick(object sender, EventArgs e)
+        {
+            if (listBoxShortcuts.SelectedIndex < 0) return;
+
+            string selectedItem = listBoxShortcuts.SelectedItem.ToString();
+
+            if (_shortcutPaths.TryGetValue(selectedItem, out string path))
+            {
+                if (path == "DRIVES")
+                    btnDrives_Click(null, null);
+                else
+                    LoadDirectory(path);
+            }
         }
 
         // ================= ICONOS ==================
@@ -127,7 +208,7 @@ namespace ExploradorDeArchivos
                         GetIcon(true, d.FullName),
                         d.Name,
                         "Carpeta",
-                        $"{subFolders} carpetas, {subFiles} archivos", //  aquí
+                        $"{subFolders} carpetas, {subFiles} archivos",
                         "",
                         d.LastWriteTime,
                         d.FullName
@@ -139,7 +220,7 @@ namespace ExploradorDeArchivos
                         GetIcon(false, f.FullName),
                         f.Name,
                         f.Extension,
-                        "-", // los archivos no tienen contenido
+                        "-",
                         FormatSize(f.Length),
                         f.LastWriteTime,
                         f.FullName
@@ -151,6 +232,7 @@ namespace ExploradorDeArchivos
                 MessageBox.Show("Error al cargar carpeta: " + ex.Message);
             }
         }
+
         // ================= ICON BY TYPE ==================
         private Image GetIcon(bool isDirectory, string path)
         {
@@ -249,7 +331,7 @@ namespace ExploradorDeArchivos
 
                         dataGridView2.Rows.Add(
                             GetIcon(false, fi.FullName),
-                            "   -> " + fi.Name,   // sangría visual
+                            "   -> " + fi.Name,
                             "Archivo"
                         );
                     }
@@ -312,8 +394,6 @@ namespace ExploradorDeArchivos
             }
         }
 
-        // ================= MENU CONTEXTUAL ==================
-
         private void txtPath_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
@@ -334,6 +414,7 @@ namespace ExploradorDeArchivos
                 }
             }
         }
+
         // ================= SIZE FORMAT ==================
         private string FormatSize(long bytes)
         {
@@ -345,7 +426,5 @@ namespace ExploradorDeArchivos
             double gb = mb / 1024.0;
             return gb.ToString("F2") + " GB";
         }
-
-       
     }
 }
