@@ -77,7 +77,7 @@ namespace ExploradorDeArchivos
             if (Directory.Exists(docs))
             {
                 _shortcutPaths.Add("Documentos", docs);
-                listBoxShortcuts.Items.Add("?? Documentos");
+                listBoxShortcuts.Items.Add("Documentos");
             }
 
             // Descargas
@@ -85,7 +85,7 @@ namespace ExploradorDeArchivos
             if (Directory.Exists(downloads))
             {
                 _shortcutPaths.Add("Descargas", downloads);
-                listBoxShortcuts.Items.Add("?? Descargas");
+                listBoxShortcuts.Items.Add("Descargas");
             }
 
             // Imágenes
@@ -93,7 +93,7 @@ namespace ExploradorDeArchivos
             if (Directory.Exists(pictures))
             {
                 _shortcutPaths.Add("Imágenes", pictures);
-                listBoxShortcuts.Items.Add("??? Imágenes");
+                listBoxShortcuts.Items.Add("Imágenes");
             }
 
             // Música
@@ -101,7 +101,7 @@ namespace ExploradorDeArchivos
             if (Directory.Exists(music))
             {
                 _shortcutPaths.Add("Música", music);
-                listBoxShortcuts.Items.Add("?? Música");
+                listBoxShortcuts.Items.Add("Música");
             }
 
             // Vídeos
@@ -109,7 +109,7 @@ namespace ExploradorDeArchivos
             if (Directory.Exists(videos))
             {
                 _shortcutPaths.Add("Vídeos", videos);
-                listBoxShortcuts.Items.Add("?? Vídeos");
+                listBoxShortcuts.Items.Add("Vídeos");
             }
 
             // Escritorio
@@ -117,12 +117,12 @@ namespace ExploradorDeArchivos
             if (Directory.Exists(desktop))
             {
                 _shortcutPaths.Add("Escritorio", desktop);
-                listBoxShortcuts.Items.Add("??? Escritorio");
+                listBoxShortcuts.Items.Add("Escritorio");
             }
 
             // Este equipo
             _shortcutPaths.Add("Este equipo", "DRIVES");
-            listBoxShortcuts.Items.Add("?? Este equipo");
+            listBoxShortcuts.Items.Add("Este equipo");
         }
 
         private void ListBoxShortcuts_DoubleClick(object sender, EventArgs e)
