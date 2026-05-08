@@ -17,6 +17,10 @@ namespace ExploradorDeArchivos
         // Diccionario para mapear nombres de acceso rápido a rutas
         private Dictionary<string, string> _shortcutPaths = new Dictionary<string, string>();
 
+        // Instancias de los reproductores
+        private FormMP3 _formMP3;
+        private FormMP4 _formMP4;
+
         public Form1()
         {
             InitializeComponent();
@@ -46,6 +50,20 @@ namespace ExploradorDeArchivos
             btnDrives.Click += btnDrives_Click;
             txtPath.KeyDown += txtPath_KeyDown;
             listBoxShortcuts.DoubleClick += ListBoxShortcuts_DoubleClick;
+
+            // Agregar manejador de cierre
+            this.FormClosing += (s, e) => 
+            {
+                if (_formMP3 != null && !_formMP3.IsDisposed)
+                {
+                    _formMP3.CerrarCompletamente();
+                    _formMP3.Close();
+                }
+                if (_formMP4 != null && !_formMP4.IsDisposed)
+                {
+                    _formMP4.Close();
+                }
+            };
         }
 
         // ================= ACCESO RÁPIDO ==================
@@ -59,7 +77,7 @@ namespace ExploradorDeArchivos
             if (Directory.Exists(docs))
             {
                 _shortcutPaths.Add("Documentos", docs);
-                listBoxShortcuts.Items.Add(" Documentos");
+                listBoxShortcuts.Items.Add("?? Documentos");
             }
 
             // Descargas
@@ -67,7 +85,7 @@ namespace ExploradorDeArchivos
             if (Directory.Exists(downloads))
             {
                 _shortcutPaths.Add("Descargas", downloads);
-                listBoxShortcuts.Items.Add("Descargas");
+                listBoxShortcuts.Items.Add("?? Descargas");
             }
 
             // Imágenes
@@ -75,7 +93,7 @@ namespace ExploradorDeArchivos
             if (Directory.Exists(pictures))
             {
                 _shortcutPaths.Add("Imágenes", pictures);
-                listBoxShortcuts.Items.Add("Imágenes");
+                listBoxShortcuts.Items.Add("??? Imágenes");
             }
 
             // Música
@@ -83,7 +101,7 @@ namespace ExploradorDeArchivos
             if (Directory.Exists(music))
             {
                 _shortcutPaths.Add("Música", music);
-                listBoxShortcuts.Items.Add("Música");
+                listBoxShortcuts.Items.Add("?? Música");
             }
 
             // Vídeos
@@ -91,7 +109,7 @@ namespace ExploradorDeArchivos
             if (Directory.Exists(videos))
             {
                 _shortcutPaths.Add("Vídeos", videos);
-                listBoxShortcuts.Items.Add("Vídeos");
+                listBoxShortcuts.Items.Add("?? Vídeos");
             }
 
             // Escritorio
@@ -99,21 +117,32 @@ namespace ExploradorDeArchivos
             if (Directory.Exists(desktop))
             {
                 _shortcutPaths.Add("Escritorio", desktop);
-                listBoxShortcuts.Items.Add("Escritorio");
+                listBoxShortcuts.Items.Add("??? Escritorio");
             }
 
             // Este equipo
             _shortcutPaths.Add("Este equipo", "DRIVES");
-            listBoxShortcuts.Items.Add("Este equipo");
+            listBoxShortcuts.Items.Add("?? Este equipo");
         }
 
         private void ListBoxShortcuts_DoubleClick(object sender, EventArgs e)
         {
             if (listBoxShortcuts.SelectedIndex < 0) return;
 
-            string selectedItem = listBoxShortcuts.SelectedItem.ToString();
+            string selectedItem = listBoxShortcuts.SelectedItem.ToString().Trim();
 
-            if (_shortcutPaths.TryGetValue(selectedItem, out string path))
+            // Buscar la clave sin emoji en el diccionario
+            string clave = null;
+            foreach (var key in _shortcutPaths.Keys)
+            {
+                if (selectedItem.EndsWith(key))
+                {
+                    clave = key;
+                    break;
+                }
+            }
+
+            if (clave != null && _shortcutPaths.TryGetValue(clave, out string path))
             {
                 if (path == "DRIVES")
                     btnDrives_Click(null, null);
@@ -253,7 +282,41 @@ namespace ExploradorDeArchivos
         private bool IsVideo(string ext) => ext is "mp4" or "avi" or "mkv" or "mov";
         private bool IsMusic(string ext) => ext is "mp3" or "wav" or "aac";
         private bool IsText(string ext) => ext is "txt" or "csv" or "json" or "xml" or "log";
-        private bool IsImage(string ext) => ext is "jpg" or "jpeg" or ".png" or "gif";
+        private bool IsImage(string ext) => ext is "jpg" or "jpeg" or "png" or "gif";
+
+        // ================= REPRODUCCIÓN AUTOMÁTICA ==================
+        private void AbrirReproductor(string rutaArchivo)
+        {
+            string ext = Path.GetExtension(rutaArchivo).ToLower().TrimStart('.');
+
+            if (IsVideo(ext))
+            {
+                // Abrir FormMP4
+                if (_formMP4 == null || _formMP4.IsDisposed)
+                {
+                    _formMP4 = new FormMP4();
+                    _formMP4.FormClosed += (s, e) => _formMP4 = null;
+                }
+
+                _formMP4.CargarYReproducir(rutaArchivo);
+                _formMP4.Show();
+                _formMP4.BringToFront();
+            }
+            else if (IsMusic(ext))
+            {
+                // Abrir FormMP3 SOLO UNA VEZ
+                if (_formMP3 == null || _formMP3.IsDisposed)
+                {
+                    _formMP3 = new FormMP3();
+                    _formMP3.FormClosed += (s, e) => _formMP3 = null;
+                    _formMP3.Show();
+                }
+
+                // Agregar y reproducir la canción
+                _formMP3.AgregarYReproducir(rutaArchivo);
+                _formMP3.BringToFront();
+            }
+        }
 
         // ================= EVENTS ==================
         private void dataGridView1_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
@@ -274,11 +337,22 @@ namespace ExploradorDeArchivos
             }
             else if (File.Exists(path))
             {
-                Process.Start(new ProcessStartInfo
+                string ext = Path.GetExtension(path).ToLower().TrimStart('.');
+
+                // Si es un archivo de audio o vídeo, abrir reproductor
+                if (IsMusic(ext) || IsVideo(ext))
                 {
-                    FileName = path,
-                    UseShellExecute = true
-                });
+                    AbrirReproductor(path);
+                }
+                else
+                {
+                    // Si es otro tipo, abrir con programa predeterminado
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = path,
+                        UseShellExecute = true
+                    });
+                }
             }
         }
 
@@ -293,7 +367,19 @@ namespace ExploradorDeArchivos
             if (Directory.Exists(path))
                 MostrarContenidoGrid2(path);
             else
-                dataGridView2.Rows.Clear();
+                dataGridView2.Rows.Clear(); 
+
+            // NUEVO: Agregar archivo de audio a la lista automáticamente al seleccionar
+            if (File.Exists(path))
+            {
+                string ext = Path.GetExtension(path).ToLower().TrimStart('.');
+
+                if (IsMusic(ext) && _formMP3 != null && !_formMP3.IsDisposed)
+                {
+                    // Si FormMP3 está abierto, agregar la canción a la playlist
+                    _formMP3.AgregarALista(path);
+                }
+            }
         }
 
         private void MostrarContenidoGrid2(string ruta)
