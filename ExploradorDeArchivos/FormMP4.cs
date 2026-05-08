@@ -98,7 +98,24 @@ namespace ExploradorDeArchivos
         // ================= MÉTODO PÚBLICO PARA REPRODUCCIÓN AUTOMÁTICA ==================
         public void CargarYReproducir(string rutaArchivo)
         {
-            CargarVideoAsync(rutaArchivo);
+            if (!_isInitialized)
+            {
+                // Si aún no está inicializado, esperar un poco
+                Task.Run(async () =>
+                {
+                    await Task.Delay(500);
+                    await CargarVideoAsyncAwaitable(rutaArchivo);
+                });
+            }
+            else
+            {
+                CargarVideoAsync(rutaArchivo);
+            }
+        }
+
+        private async Task CargarVideoAsyncAwaitable(string rutaArchivo)
+        {
+            await Task.Run(() => CargarVideoAsync(rutaArchivo));
         }
 
         private void PicAbrir_Click(object sender, EventArgs e)

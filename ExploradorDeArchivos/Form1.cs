@@ -296,10 +296,11 @@ namespace ExploradorDeArchivos
                 {
                     _formMP4 = new FormMP4();
                     _formMP4.FormClosed += (s, e) => _formMP4 = null;
+                    _formMP4.Show();
                 }
 
+                // Cargar y reproducir el video
                 _formMP4.CargarYReproducir(rutaArchivo);
-                _formMP4.Show();
                 _formMP4.BringToFront();
             }
             else if (IsMusic(ext))
