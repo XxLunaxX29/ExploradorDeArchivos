@@ -43,8 +43,10 @@ namespace ExploradorDeArchivos
             lblQuickAccess = new Label();
             listBoxShortcuts = new ListBox();
             splitter1 = new Splitter();
+            btnllamarFormDataBase = new Button();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dataGridView2).BeginInit();
+            panelQuickAccess.SuspendLayout();
             SuspendLayout();
             // 
             // imageList1
@@ -96,45 +98,6 @@ namespace ExploradorDeArchivos
             btnDrives.Text = "Discos";
             btnDrives.UseVisualStyleBackColor = true;
             // 
-            // panelQuickAccess
-            // 
-            panelQuickAccess.BackColor = SystemColors.Control;
-            panelQuickAccess.BorderStyle = BorderStyle.FixedSingle;
-            panelQuickAccess.Controls.Add(lblQuickAccess);
-            panelQuickAccess.Controls.Add(listBoxShortcuts);
-            panelQuickAccess.Location = new Point(12, 71);
-            panelQuickAccess.Name = "panelQuickAccess";
-            panelQuickAccess.Size = new Size(200, 554);
-            panelQuickAccess.TabIndex = 13;
-            // 
-            // lblQuickAccess
-            // 
-            lblQuickAccess.AutoSize = true;
-            lblQuickAccess.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            lblQuickAccess.Location = new Point(8, 8);
-            lblQuickAccess.Name = "lblQuickAccess";
-            lblQuickAccess.Size = new Size(117, 20);
-            lblQuickAccess.TabIndex = 1;
-            lblQuickAccess.Text = "Acceso Rápido";
-            // 
-            // listBoxShortcuts
-            // 
-            listBoxShortcuts.BorderStyle = BorderStyle.None;
-            listBoxShortcuts.FormattingEnabled = true;
-            listBoxShortcuts.ItemHeight = 20;
-            listBoxShortcuts.Location = new Point(8, 31);
-            listBoxShortcuts.Name = "listBoxShortcuts";
-            listBoxShortcuts.Size = new Size(184, 520);
-            listBoxShortcuts.TabIndex = 0;
-            // 
-            // splitter1
-            // 
-            splitter1.Location = new Point(212, 71);
-            splitter1.Name = "splitter1";
-            splitter1.Size = new Size(4, 554);
-            splitter1.TabIndex = 14;
-            splitter1.TabStop = false;
-            // 
             // dataGridView1
             // 
             dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
@@ -161,11 +124,60 @@ namespace ExploradorDeArchivos
             dataGridView2.Size = new Size(413, 554);
             dataGridView2.TabIndex = 12;
             // 
+            // panelQuickAccess
+            // 
+            panelQuickAccess.BackColor = SystemColors.Control;
+            panelQuickAccess.BorderStyle = BorderStyle.FixedSingle;
+            panelQuickAccess.Controls.Add(lblQuickAccess);
+            panelQuickAccess.Controls.Add(listBoxShortcuts);
+            panelQuickAccess.Location = new Point(12, 71);
+            panelQuickAccess.Name = "panelQuickAccess";
+            panelQuickAccess.Size = new Size(200, 554);
+            panelQuickAccess.TabIndex = 13;
+            // 
+            // lblQuickAccess
+            // 
+            lblQuickAccess.AutoSize = true;
+            lblQuickAccess.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblQuickAccess.Location = new Point(8, 8);
+            lblQuickAccess.Name = "lblQuickAccess";
+            lblQuickAccess.Size = new Size(111, 20);
+            lblQuickAccess.TabIndex = 1;
+            lblQuickAccess.Text = "Acceso Rápido";
+            // 
+            // listBoxShortcuts
+            // 
+            listBoxShortcuts.BorderStyle = BorderStyle.None;
+            listBoxShortcuts.FormattingEnabled = true;
+            listBoxShortcuts.Location = new Point(8, 31);
+            listBoxShortcuts.Name = "listBoxShortcuts";
+            listBoxShortcuts.Size = new Size(184, 520);
+            listBoxShortcuts.TabIndex = 0;
+            // 
+            // splitter1
+            // 
+            splitter1.Location = new Point(0, 0);
+            splitter1.Name = "splitter1";
+            splitter1.Size = new Size(4, 637);
+            splitter1.TabIndex = 14;
+            splitter1.TabStop = false;
+            // 
+            // btnllamarFormDataBase
+            // 
+            btnllamarFormDataBase.Location = new Point(880, 4);
+            btnllamarFormDataBase.Name = "btnllamarFormDataBase";
+            btnllamarFormDataBase.Size = new Size(192, 28);
+            btnllamarFormDataBase.TabIndex = 15;
+            btnllamarFormDataBase.Text = "Llamar Form Conexiones";
+            btnllamarFormDataBase.UseVisualStyleBackColor = true;
+            btnllamarFormDataBase.Click += btnllamarFormDataBase_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1173, 637);
+            Controls.Add(btnllamarFormDataBase);
             Controls.Add(splitter1);
             Controls.Add(dataGridView2);
             Controls.Add(dataGridView1);
@@ -179,6 +191,8 @@ namespace ExploradorDeArchivos
             Text = "Explorador de archivos";
             ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
             ((System.ComponentModel.ISupportInitialize)dataGridView2).EndInit();
+            panelQuickAccess.ResumeLayout(false);
+            panelQuickAccess.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -196,5 +210,6 @@ namespace ExploradorDeArchivos
         private Label lblQuickAccess;
         private ListBox listBoxShortcuts;
         private Splitter splitter1;
+        private Button btnllamarFormDataBase;
     }
 }

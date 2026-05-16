@@ -20,6 +20,9 @@ namespace ExploradorDeArchivos
         // Instancias de los reproductores
         private FormMP3 _formMP3;
         private FormMP4 _formMP4;
+        
+        // ? NUEVA: Instancia singleton de FormDataBase
+        private FormDataBase _formDataBase;
 
         public Form1()
         {
@@ -52,7 +55,7 @@ namespace ExploradorDeArchivos
             listBoxShortcuts.DoubleClick += ListBoxShortcuts_DoubleClick;
 
             // Agregar manejador de cierre
-            this.FormClosing += (s, e) => 
+            this.FormClosing += (s, e) =>
             {
                 if (_formMP3 != null && !_formMP3.IsDisposed)
                 {
@@ -368,7 +371,7 @@ namespace ExploradorDeArchivos
             if (Directory.Exists(path))
                 MostrarContenidoGrid2(path);
             else
-                dataGridView2.Rows.Clear(); 
+                dataGridView2.Rows.Clear();
 
             // NUEVO: Agregar archivo de audio a la lista automáticamente al seleccionar
             if (File.Exists(path))
@@ -512,6 +515,22 @@ namespace ExploradorDeArchivos
             if (mb < 1024) return mb.ToString("F1") + " MB";
             double gb = mb / 1024.0;
             return gb.ToString("F2") + " GB";
+        }
+
+        private void btnllamarFormDataBase_Click(object sender, EventArgs e)
+        {
+            //  Si ya está abierto, solo traerlo al frente
+            if (_formDataBase != null && !_formDataBase.IsDisposed)
+            {
+                _formDataBase.BringToFront();
+                _formDataBase.WindowState = FormWindowState.Normal;
+                return;
+            }
+
+            //  Si no existe o fue cerrado, crear una nueva instancia
+            _formDataBase = new FormDataBase();
+            _formDataBase.FormClosed += (s, e) => _formDataBase = null;
+            _formDataBase.Show();
         }
     }
 }
