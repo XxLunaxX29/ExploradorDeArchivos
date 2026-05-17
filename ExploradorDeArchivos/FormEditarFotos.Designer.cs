@@ -68,17 +68,18 @@
             // tableLayoutPanel
             // 
             tableLayoutPanel.ColumnCount = 2;
-            tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 75F));
-            tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25F));
+            tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 80F));
+            tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
             tableLayoutPanel.Controls.Add(panelControls, 1, 0);
             tableLayoutPanel.Controls.Add(canvas, 0, 0);
+            tableLayoutPanel.Dock = DockStyle.Fill;
             tableLayoutPanel.Location = new Point(0, 0);
+            tableLayoutPanel.Margin = new Padding(3, 4, 3, 4);
             tableLayoutPanel.Name = "tableLayoutPanel";
             tableLayoutPanel.RowCount = 1;
-            tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-            tableLayoutPanel.Size = new Size(1000, 574);
+            tableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 765F));
+            tableLayoutPanel.Size = new Size(1143, 891);
             tableLayoutPanel.TabIndex = 0;
-            tableLayoutPanel.Paint += tableLayoutPanel_Paint;
             // 
             // panelControls
             // 
@@ -99,17 +100,19 @@
             panelControls.Controls.Add(trackBrushSize);
             panelControls.Dock = DockStyle.Fill;
             panelControls.FlowDirection = FlowDirection.TopDown;
-            panelControls.Location = new Point(753, 3);
+            panelControls.Location = new Point(917, 4);
+            panelControls.Margin = new Padding(3, 4, 3, 4);
             panelControls.Name = "panelControls";
-            panelControls.Size = new Size(244, 568);
+            panelControls.Size = new Size(223, 883);
             panelControls.TabIndex = 1;
             // 
             // btnOpen
             // 
             btnOpen.AutoSize = true;
-            btnOpen.Location = new Point(3, 3);
+            btnOpen.Location = new Point(3, 4);
+            btnOpen.Margin = new Padding(3, 4, 3, 4);
             btnOpen.Name = "btnOpen";
-            btnOpen.Size = new Size(75, 25);
+            btnOpen.Size = new Size(86, 40);
             btnOpen.TabIndex = 0;
             btnOpen.Text = "Abrir";
             btnOpen.Click += btnOpen_Click;
@@ -117,9 +120,10 @@
             // btnSave
             // 
             btnSave.AutoSize = true;
-            btnSave.Location = new Point(3, 34);
+            btnSave.Location = new Point(3, 52);
+            btnSave.Margin = new Padding(3, 4, 3, 4);
             btnSave.Name = "btnSave";
-            btnSave.Size = new Size(75, 25);
+            btnSave.Size = new Size(86, 40);
             btnSave.TabIndex = 1;
             btnSave.Text = "Guardar";
             btnSave.Click += btnSave_Click;
@@ -127,9 +131,10 @@
             // btnGray
             // 
             btnGray.AutoSize = true;
-            btnGray.Location = new Point(3, 65);
+            btnGray.Location = new Point(3, 100);
+            btnGray.Margin = new Padding(3, 4, 3, 4);
             btnGray.Name = "btnGray";
-            btnGray.Size = new Size(98, 25);
+            btnGray.Size = new Size(141, 40);
             btnGray.TabIndex = 2;
             btnGray.Text = "Escala de grises";
             btnGray.Click += btnGray_Click;
@@ -137,9 +142,10 @@
             // btnSepia
             // 
             btnSepia.AutoSize = true;
-            btnSepia.Location = new Point(3, 96);
+            btnSepia.Location = new Point(3, 148);
+            btnSepia.Margin = new Padding(3, 4, 3, 4);
             btnSepia.Name = "btnSepia";
-            btnSepia.Size = new Size(75, 25);
+            btnSepia.Size = new Size(86, 40);
             btnSepia.TabIndex = 3;
             btnSepia.Text = "Sepia";
             btnSepia.Click += btnSepia_Click;
@@ -147,9 +153,10 @@
             // btnRevert
             // 
             btnRevert.AutoSize = true;
-            btnRevert.Location = new Point(3, 127);
+            btnRevert.Location = new Point(3, 196);
+            btnRevert.Margin = new Padding(3, 4, 3, 4);
             btnRevert.Name = "btnRevert";
-            btnRevert.Size = new Size(75, 25);
+            btnRevert.Size = new Size(86, 40);
             btnRevert.TabIndex = 4;
             btnRevert.Text = "Revertir";
             btnRevert.Click += btnRevert_Click;
@@ -157,9 +164,10 @@
             // btnInvert
             // 
             btnInvert.AutoSize = true;
-            btnInvert.Location = new Point(3, 158);
+            btnInvert.Location = new Point(3, 244);
+            btnInvert.Margin = new Padding(3, 4, 3, 4);
             btnInvert.Name = "btnInvert";
-            btnInvert.Size = new Size(75, 25);
+            btnInvert.Size = new Size(86, 40);
             btnInvert.TabIndex = 5;
             btnInvert.Text = "Invertir";
             btnInvert.Click += btnInvert_Click;
@@ -167,9 +175,10 @@
             // btnCrop
             // 
             btnCrop.AutoSize = true;
-            btnCrop.Location = new Point(3, 189);
+            btnCrop.Location = new Point(3, 292);
+            btnCrop.Margin = new Padding(3, 4, 3, 4);
             btnCrop.Name = "btnCrop";
-            btnCrop.Size = new Size(75, 25);
+            btnCrop.Size = new Size(86, 40);
             btnCrop.TabIndex = 6;
             btnCrop.Text = "Recortar";
             btnCrop.Click += btnCrop_Click;
@@ -177,9 +186,10 @@
             // btnBrush
             // 
             btnBrush.AutoSize = true;
-            btnBrush.Location = new Point(3, 220);
+            btnBrush.Location = new Point(3, 340);
+            btnBrush.Margin = new Padding(3, 4, 3, 4);
             btnBrush.Name = "btnBrush";
-            btnBrush.Size = new Size(75, 25);
+            btnBrush.Size = new Size(86, 40);
             btnBrush.TabIndex = 7;
             btnBrush.Text = "Pincel";
             btnBrush.Click += btnBrush_Click;
@@ -187,9 +197,10 @@
             // btnColor
             // 
             btnColor.AutoSize = true;
-            btnColor.Location = new Point(3, 251);
+            btnColor.Location = new Point(3, 388);
+            btnColor.Margin = new Padding(3, 4, 3, 4);
             btnColor.Name = "btnColor";
-            btnColor.Size = new Size(75, 25);
+            btnColor.Size = new Size(86, 40);
             btnColor.TabIndex = 8;
             btnColor.Text = "Color";
             btnColor.Click += btnColor_Click;
@@ -197,9 +208,10 @@
             // panelColorPreview
             // 
             panelColorPreview.BackColor = Color.Black;
-            panelColorPreview.Location = new Point(3, 282);
+            panelColorPreview.Location = new Point(3, 436);
+            panelColorPreview.Margin = new Padding(3, 4, 3, 4);
             panelColorPreview.Name = "panelColorPreview";
-            panelColorPreview.Size = new Size(30, 30);
+            panelColorPreview.Size = new Size(34, 40);
             panelColorPreview.TabIndex = 9;
             // 
             // groupAdjusts
@@ -210,67 +222,71 @@
             groupAdjusts.Controls.Add(trackContrast);
             groupAdjusts.Controls.Add(lblSaturation);
             groupAdjusts.Controls.Add(trackSaturation);
-            groupAdjusts.Location = new Point(3, 318);
+            groupAdjusts.Location = new Point(3, 484);
+            groupAdjusts.Margin = new Padding(3, 4, 3, 4);
             groupAdjusts.Name = "groupAdjusts";
-            groupAdjusts.Size = new Size(240, 145);
+            groupAdjusts.Padding = new Padding(3, 4, 3, 4);
+            groupAdjusts.Size = new Size(274, 193);
             groupAdjusts.TabIndex = 10;
             groupAdjusts.TabStop = false;
             groupAdjusts.Text = "Ajustes";
             // 
             // lblBrightness
             // 
-            lblBrightness.Location = new Point(6, 57);
+            lblBrightness.Location = new Point(7, 76);
             lblBrightness.Name = "lblBrightness";
-            lblBrightness.Size = new Size(69, 23);
+            lblBrightness.Size = new Size(79, 31);
             lblBrightness.TabIndex = 0;
             lblBrightness.Text = "Brillo";
             // 
             // trackBrightness
             // 
-            trackBrightness.Location = new Point(68, 57);
+            trackBrightness.Location = new Point(78, 76);
+            trackBrightness.Margin = new Padding(3, 4, 3, 4);
             trackBrightness.Maximum = 100;
             trackBrightness.Minimum = -100;
             trackBrightness.Name = "trackBrightness";
-            trackBrightness.Size = new Size(172, 45);
+            trackBrightness.Size = new Size(197, 56);
             trackBrightness.TabIndex = 1;
             trackBrightness.TickFrequency = 10;
             trackBrightness.Scroll += TrackBar_Scroll;
             // 
             // lblContrast
             // 
-            lblContrast.Location = new Point(6, 19);
+            lblContrast.Location = new Point(7, 25);
             lblContrast.Name = "lblContrast";
-            lblContrast.Size = new Size(56, 23);
+            lblContrast.Size = new Size(64, 31);
             lblContrast.TabIndex = 2;
             lblContrast.Text = "Contraste";
-            lblContrast.Click += lblContrast_Click;
             // 
             // trackContrast
             // 
-            trackContrast.Location = new Point(68, 19);
+            trackContrast.Location = new Point(78, 25);
+            trackContrast.Margin = new Padding(3, 4, 3, 4);
             trackContrast.Maximum = 100;
             trackContrast.Minimum = -100;
             trackContrast.Name = "trackContrast";
-            trackContrast.Size = new Size(172, 45);
+            trackContrast.Size = new Size(197, 56);
             trackContrast.TabIndex = 3;
             trackContrast.TickFrequency = 10;
             trackContrast.Scroll += TrackBar_Scroll;
             // 
             // lblSaturation
             // 
-            lblSaturation.Location = new Point(6, 105);
+            lblSaturation.Location = new Point(7, 140);
             lblSaturation.Name = "lblSaturation";
-            lblSaturation.Size = new Size(69, 23);
+            lblSaturation.Size = new Size(79, 31);
             lblSaturation.TabIndex = 4;
             lblSaturation.Text = "Saturación";
             // 
             // trackSaturation
             // 
-            trackSaturation.Location = new Point(68, 105);
+            trackSaturation.Location = new Point(78, 140);
+            trackSaturation.Margin = new Padding(3, 4, 3, 4);
             trackSaturation.Maximum = 100;
             trackSaturation.Minimum = -100;
             trackSaturation.Name = "trackSaturation";
-            trackSaturation.Size = new Size(172, 45);
+            trackSaturation.Size = new Size(197, 56);
             trackSaturation.TabIndex = 5;
             trackSaturation.TickFrequency = 10;
             trackSaturation.Scroll += TrackBar_Scroll;
@@ -278,38 +294,40 @@
             // lblBrushSize
             // 
             lblBrushSize.AutoSize = true;
-            lblBrushSize.Location = new Point(3, 466);
+            lblBrushSize.Location = new Point(3, 681);
             lblBrushSize.Name = "lblBrushSize";
-            lblBrushSize.Size = new Size(85, 15);
+            lblBrushSize.Size = new Size(105, 20);
             lblBrushSize.TabIndex = 11;
             lblBrushSize.Text = "Tamaño pincel";
             // 
             // lblBrushSizeValue
             // 
             lblBrushSizeValue.AutoSize = true;
-            lblBrushSizeValue.Location = new Point(3, 481);
+            lblBrushSizeValue.Location = new Point(3, 701);
             lblBrushSizeValue.Name = "lblBrushSizeValue";
-            lblBrushSizeValue.Size = new Size(13, 15);
+            lblBrushSizeValue.Size = new Size(17, 20);
             lblBrushSizeValue.TabIndex = 13;
             lblBrushSizeValue.Text = "5";
             // 
             // trackBrushSize
             // 
-            trackBrushSize.Location = new Point(3, 499);
+            trackBrushSize.Location = new Point(3, 725);
+            trackBrushSize.Margin = new Padding(3, 4, 3, 4);
             trackBrushSize.Maximum = 50;
             trackBrushSize.Minimum = 1;
             trackBrushSize.Name = "trackBrushSize";
-            trackBrushSize.Size = new Size(200, 45);
+            trackBrushSize.Size = new Size(229, 56);
             trackBrushSize.TabIndex = 12;
             trackBrushSize.Value = 5;
             trackBrushSize.Scroll += trackBrushSize_Scroll;
             // 
             // canvas
             // 
-            canvas.Location = new Point(3, 3);
+            canvas.Location = new Point(3, 4);
+            canvas.Margin = new Padding(3, 4, 3, 4);
             canvas.Name = "canvas";
-            canvas.Size = new Size(744, 511);
-            canvas.SizeMode = PictureBoxSizeMode.CenterImage;
+            canvas.Size = new Size(908, 738);
+            canvas.SizeMode = PictureBoxSizeMode.Zoom;
             canvas.TabIndex = 2;
             canvas.TabStop = false;
             canvas.Paint += canvas_Paint;
@@ -322,39 +340,43 @@
             webMapa.AllowExternalDrop = true;
             webMapa.CreationProperties = null;
             webMapa.DefaultBackgroundColor = Color.White;
-            webMapa.Location = new Point(0, 520);
+            webMapa.Location = new Point(0, 750);
+            webMapa.Margin = new Padding(3, 4, 3, 4);
             webMapa.Name = "webMapa";
-            webMapa.Size = new Size(747, 136);
+            webMapa.Size = new Size(854, 124);
             webMapa.TabIndex = 1;
             webMapa.ZoomFactor = 1D;
             // 
             // txtCoordenadas
             // 
-            txtCoordenadas.Location = new Point(756, 594);
+            txtCoordenadas.Location = new Point(864, 792);
+            txtCoordenadas.Margin = new Padding(3, 4, 3, 4);
             txtCoordenadas.Name = "txtCoordenadas";
-            txtCoordenadas.Size = new Size(232, 23);
+            txtCoordenadas.Size = new Size(265, 27);
             txtCoordenadas.TabIndex = 2;
             // 
             // btnMostrarUbicacion
             // 
-            btnMostrarUbicacion.Location = new Point(800, 632);
+            btnMostrarUbicacion.Location = new Point(914, 843);
+            btnMostrarUbicacion.Margin = new Padding(3, 4, 3, 4);
             btnMostrarUbicacion.Name = "btnMostrarUbicacion";
-            btnMostrarUbicacion.Size = new Size(134, 24);
+            btnMostrarUbicacion.Size = new Size(153, 32);
             btnMostrarUbicacion.TabIndex = 3;
             btnMostrarUbicacion.Text = "Mostrar Ubicacion";
             btnMostrarUbicacion.UseVisualStyleBackColor = true;
             btnMostrarUbicacion.Click += btnMostrarUbicacion_Click;
             // 
-            // Form1
+            // FormEditarFotos
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1000, 668);
+            ClientSize = new Size(1143, 891);
             Controls.Add(btnMostrarUbicacion);
             Controls.Add(txtCoordenadas);
             Controls.Add(webMapa);
             Controls.Add(tableLayoutPanel);
-            Name = "Form1";
+            Margin = new Padding(3, 4, 3, 4);
+            Name = "FormEditarFotos";
             Text = "Simple Photo Editor";
             FormClosing += Form1_FormClosing;
             tableLayoutPanel.ResumeLayout(false);

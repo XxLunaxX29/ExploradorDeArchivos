@@ -104,7 +104,7 @@ namespace ExploradorDeArchivos
         height='100%'
         frameborder='0'
         style='border:0'
-        src='https://www.google.com/maps?q={lat},{lon}&z=10&output=embed'>
+        src='https://www.google.com/maps?q={lat},{lon}&z=15&output=embed'>
     </iframe>
 </body>
 </html>";
@@ -397,14 +397,33 @@ namespace ExploradorDeArchivos
         }
     }
 
-    private void lblContrast_Click(object sender, EventArgs e)
+    // ✅ NUEVO: Método público para cargar imagen desde Form1
+    public void AbrirImagen(string rutaArchivo)
     {
+        try
+        {
+            var loaded = new Bitmap(rutaArchivo);
+            LoadBitmap(loaded);
 
-    }
+            // Intentar obtener coordenadas GPS
+            var coordenadas = ObtenerCoordenadas(loaded);
 
-    private void tableLayoutPanel_Paint(object sender, PaintEventArgs e)
-    {
-
+            if (coordenadas != null)
+            {
+                txtCoordenadas.Text = $"{coordenadas.Value.lat}, {coordenadas.Value.lon}";
+                lat = coordenadas.Value.lat;
+                lon = coordenadas.Value.lon;
+                MostrarMapa(lat, lon);
+            }
+            else
+            {
+                txtCoordenadas.Text = "No se encontraron datos GPS.";
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"No se pudo abrir el archivo como imagen:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 }
 }

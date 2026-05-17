@@ -14,15 +14,15 @@ namespace ExploradorDeArchivos
 
         int idxVideo, idxMusic, idxText, idxFolder, idxOther, idxImage;
 
-        // Diccionario para mapear nombres de acceso rápido a rutas
         private Dictionary<string, string> _shortcutPaths = new Dictionary<string, string>();
 
-        // Instancias de los reproductores
+        // Instancias de los formularios
         private FormMP3 _formMP3;
         private FormMP4 _formMP4;
-        
-        // ? NUEVA: Instancia singleton de FormDataBase
         private FormDataBase _formDataBase;
+        
+        // ? NUEVA: Instancia singleton de FormEditarFotos
+        private FormEditarFotos _formEditarFotos;
 
         public Form1()
         {
@@ -308,7 +308,7 @@ namespace ExploradorDeArchivos
             }
             else if (IsMusic(ext))
             {
-                // Abrir FormMP3 SOLO UNA VEZ
+                // Abrir FormMP3
                 if (_formMP3 == null || _formMP3.IsDisposed)
                 {
                     _formMP3 = new FormMP3();
@@ -319,6 +319,20 @@ namespace ExploradorDeArchivos
                 // Agregar y reproducir la canción
                 _formMP3.AgregarYReproducir(rutaArchivo);
                 _formMP3.BringToFront();
+            }
+            else if (IsImage(ext))
+            {
+                // ? NUEVO: Abrir FormEditarFotos
+                if (_formEditarFotos == null || _formEditarFotos.IsDisposed)
+                {
+                    _formEditarFotos = new FormEditarFotos();
+                    _formEditarFotos.FormClosed += (s, e) => _formEditarFotos = null;
+                    _formEditarFotos.Show();
+                }
+
+                // Cargar la imagen automáticamente
+                _formEditarFotos.AbrirImagen(rutaArchivo);
+                _formEditarFotos.BringToFront();
             }
         }
 
@@ -343,8 +357,8 @@ namespace ExploradorDeArchivos
             {
                 string ext = Path.GetExtension(path).ToLower().TrimStart('.');
 
-                // Si es un archivo de audio o vídeo, abrir reproductor
-                if (IsMusic(ext) || IsVideo(ext))
+                // ? MODIFICADO: Agregar IsImage aquí también
+                if (IsMusic(ext) || IsVideo(ext) || IsImage(ext))
                 {
                     AbrirReproductor(path);
                 }
