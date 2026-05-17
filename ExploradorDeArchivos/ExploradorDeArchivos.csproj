@@ -13,6 +13,7 @@
     <PackageReference Include="ID3" Version="0.6.0" />
     <PackageReference Include="LibVLCSharp.WinForms" Version="3.9.7.1" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.1" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4015-prerelease" />
     <PackageReference Include="MP3Sharp" Version="1.0.5" />
     <PackageReference Include="MySqlConnector" Version="2.5.0" />
     <PackageReference Include="NAudio" Version="2.3.0" />
