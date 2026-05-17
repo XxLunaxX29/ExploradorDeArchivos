@@ -20,7 +20,10 @@ namespace ExploradorDeArchivos
         private FormMP3 _formMP3;
         private FormMP4 _formMP4;
         private FormDataBase _formDataBase;
-        
+        private FormCorrector _formCorrector;
+
+
+
         // ? NUEVA: Instancia singleton de FormEditarFotos
         private FormEditarFotos _formEditarFotos;
 
@@ -545,6 +548,22 @@ namespace ExploradorDeArchivos
             _formDataBase = new FormDataBase();
             _formDataBase.FormClosed += (s, e) => _formDataBase = null;
             _formDataBase.Show();
+        }
+
+        private void btnllamarFormCorrector_Click(object sender, EventArgs e)
+        {
+            //  Si ya está abierto, solo traerlo al frente
+            if (_formCorrector != null && !_formCorrector.IsDisposed)
+            {
+                _formCorrector.BringToFront();
+                _formCorrector.WindowState = FormWindowState.Normal;
+                return;
+            }
+
+            //  Si no existe o fue cerrado, crear una nueva instancia
+            _formCorrector = new FormCorrector();
+            _formCorrector.FormClosed += (s, e) => _formCorrector = null;
+            _formCorrector.Show();
         }
     }
 }

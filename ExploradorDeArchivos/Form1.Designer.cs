@@ -44,6 +44,7 @@ namespace ExploradorDeArchivos
             listBoxShortcuts = new ListBox();
             splitter1 = new Splitter();
             btnllamarFormDataBase = new Button();
+            btnllamarFormCorrector = new Button();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dataGridView2).BeginInit();
             panelQuickAccess.SuspendLayout();
@@ -172,11 +173,22 @@ namespace ExploradorDeArchivos
             btnllamarFormDataBase.UseVisualStyleBackColor = true;
             btnllamarFormDataBase.Click += btnllamarFormDataBase_Click;
             // 
+            // btnllamarFormCorrector
+            // 
+            btnllamarFormCorrector.Location = new Point(880, 38);
+            btnllamarFormCorrector.Name = "btnllamarFormCorrector";
+            btnllamarFormCorrector.Size = new Size(192, 28);
+            btnllamarFormCorrector.TabIndex = 16;
+            btnllamarFormCorrector.Text = "Llamar Form Corrector";
+            btnllamarFormCorrector.UseVisualStyleBackColor = true;
+            btnllamarFormCorrector.Click += btnllamarFormCorrector_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1173, 637);
+            Controls.Add(btnllamarFormCorrector);
             Controls.Add(btnllamarFormDataBase);
             Controls.Add(splitter1);
             Controls.Add(dataGridView2);
@@ -211,5 +223,6 @@ namespace ExploradorDeArchivos
         private ListBox listBoxShortcuts;
         private Splitter splitter1;
         private Button btnllamarFormDataBase;
+        private Button btnllamarFormCorrector;
     }
 }
