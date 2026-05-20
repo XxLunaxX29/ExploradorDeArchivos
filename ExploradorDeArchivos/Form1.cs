@@ -21,6 +21,7 @@ namespace ExploradorDeArchivos
         private FormMP4 _formMP4;
         private FormDataBase _formDataBase;
         private FormCorrector _formCorrector;
+        private FormEdit _formEdit;
 
 
 
@@ -564,6 +565,22 @@ namespace ExploradorDeArchivos
             _formCorrector = new FormCorrector();
             _formCorrector.FormClosed += (s, e) => _formCorrector = null;
             _formCorrector.Show();
+        }
+
+        private void btnLlamarEditor_Click(object sender, EventArgs e)
+        {
+            //  Si ya está abierto, solo traerlo al frente
+            if (_formEdit != null && !_formEdit.IsDisposed)
+            {
+                _formEdit.BringToFront();
+                _formEdit.WindowState = FormWindowState.Normal;
+                return;
+            }
+
+            //  Si no existe o fue cerrado, crear una nueva instancia
+            _formEdit = new FormEdit();
+            _formEdit.FormClosed += (s, e) => _formEdit = null;
+            _formEdit.Show();
         }
     }
 }

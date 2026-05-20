@@ -45,6 +45,7 @@ namespace ExploradorDeArchivos
             splitter1 = new Splitter();
             btnllamarFormDataBase = new Button();
             btnllamarFormCorrector = new Button();
+            btnLlamarEditor = new Button();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dataGridView2).BeginInit();
             panelQuickAccess.SuspendLayout();
@@ -165,29 +166,40 @@ namespace ExploradorDeArchivos
             // 
             // btnllamarFormDataBase
             // 
-            btnllamarFormDataBase.Location = new Point(880, 4);
+            btnllamarFormDataBase.Location = new Point(871, 4);
             btnllamarFormDataBase.Name = "btnllamarFormDataBase";
-            btnllamarFormDataBase.Size = new Size(192, 28);
+            btnllamarFormDataBase.Size = new Size(142, 28);
             btnllamarFormDataBase.TabIndex = 15;
-            btnllamarFormDataBase.Text = "Llamar Form Conexiones";
+            btnllamarFormDataBase.Text = "Form Conexiones";
             btnllamarFormDataBase.UseVisualStyleBackColor = true;
             btnllamarFormDataBase.Click += btnllamarFormDataBase_Click;
             // 
             // btnllamarFormCorrector
             // 
-            btnllamarFormCorrector.Location = new Point(880, 38);
+            btnllamarFormCorrector.Location = new Point(1019, 4);
             btnllamarFormCorrector.Name = "btnllamarFormCorrector";
-            btnllamarFormCorrector.Size = new Size(192, 28);
+            btnllamarFormCorrector.Size = new Size(142, 28);
             btnllamarFormCorrector.TabIndex = 16;
-            btnllamarFormCorrector.Text = "Llamar Form Corrector";
+            btnllamarFormCorrector.Text = "Form Corrector";
             btnllamarFormCorrector.UseVisualStyleBackColor = true;
             btnllamarFormCorrector.Click += btnllamarFormCorrector_Click;
+            // 
+            // btnLlamarEditor
+            // 
+            btnLlamarEditor.Location = new Point(1019, 37);
+            btnLlamarEditor.Name = "btnLlamarEditor";
+            btnLlamarEditor.Size = new Size(142, 28);
+            btnLlamarEditor.TabIndex = 17;
+            btnLlamarEditor.Text = "Form Editor";
+            btnLlamarEditor.UseVisualStyleBackColor = true;
+            btnLlamarEditor.Click += btnLlamarEditor_Click;
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1173, 637);
+            Controls.Add(btnLlamarEditor);
             Controls.Add(btnllamarFormCorrector);
             Controls.Add(btnllamarFormDataBase);
             Controls.Add(splitter1);
@@ -224,5 +236,6 @@ namespace ExploradorDeArchivos
         private Splitter splitter1;
         private Button btnllamarFormDataBase;
         private Button btnllamarFormCorrector;
+        private Button btnLlamarEditor;
     }
 }

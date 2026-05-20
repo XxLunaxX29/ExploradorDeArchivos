@@ -56,6 +56,7 @@ namespace ExploradorDeArchivos
             btnExportFileJson = new Button();
             btnExportFileTxt = new Button();
             btnExportFileXml = new Button();
+            btnExportFileCsv = new Button();
             pnlTop.SuspendLayout();
             tabControl.SuspendLayout();
             tabData.SuspendLayout();
@@ -464,6 +465,7 @@ namespace ExploradorDeArchivos
             // pnlExport
             // 
             pnlExport.BackColor = Color.FromArgb(50, 35, 30);
+            pnlExport.Controls.Add(btnExportFileCsv);
             pnlExport.Controls.Add(btnExportFileXml);
             pnlExport.Controls.Add(btnExportFileTxt);
             pnlExport.Controls.Add(btnExportFileJson);
@@ -566,6 +568,19 @@ namespace ExploradorDeArchivos
             btnExportFileXml.UseVisualStyleBackColor = false;
             btnExportFileXml.Click += btnExportFileXml_Click;
             // 
+            // btnExportFileCsv
+            // 
+            btnExportFileCsv.BackColor = Color.FromArgb(76, 175, 80);
+            btnExportFileCsv.FlatStyle = FlatStyle.Flat;
+            btnExportFileCsv.ForeColor = Color.White;
+            btnExportFileCsv.Location = new Point(900, 7);
+            btnExportFileCsv.Name = "btnExportFileCsv";
+            btnExportFileCsv.Size = new Size(105, 28);
+            btnExportFileCsv.TabIndex = 7;
+            btnExportFileCsv.Text = "📤 CSV";
+            btnExportFileCsv.UseVisualStyleBackColor = false;
+            btnExportFileCsv.Click += btnExportFileCsv_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
@@ -640,5 +655,6 @@ namespace ExploradorDeArchivos
         private Button btnExportFileJson;
         private Button btnExportFileTxt;
         private Button btnExportFileXml;
+        private Button btnExportFileCsv;
     }
 }

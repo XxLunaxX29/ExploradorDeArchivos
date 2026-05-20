@@ -960,6 +960,62 @@ namespace ExploradorDeArchivos
         private void btnExportFileXml_Click(object? sender, EventArgs e)
             => ExportToFile("XML", "Archivos XML|*.xml", ExportItemsToXml);
 
+        private void btnExportFileCsv_Click(object? sender, EventArgs e)
+        {
+            if (!HasData()) return;
+
+            using var dlg = new SaveFileDialog
+            {
+                Title = "Exportar datos a CSV",
+                Filter = "Archivos CSV|*.csv",
+                FileName = "datos_exportados"
+            };
+
+            if (dlg.ShowDialog() != DialogResult.OK) return;
+
+            try
+            {
+                Cursor = Cursors.WaitCursor;
+                
+                // Usar DataExporter para exportar a CSV de forma simple
+                var rows = new List<Dictionary<string, string>>(_allItems.Count);
+                foreach (var item in _allItems)
+                    rows.Add(ItemToRow(item));
+
+                var columns = DiscoverAllColumns(rows);
+                var sb = new StringBuilder();
+                sb.AppendLine(string.Join(",", columns.Select(c => $"\"{c}\"")));
+
+                foreach (var row in rows)
+                {
+                    var values = new List<string>(columns.Count);
+                    foreach (var col in columns)
+                    {
+                        var val = row.TryGetValue(col, out var v) ? v : "";
+                        // Escapar comillas y valores con comas
+                        if (val.Contains(",") || val.Contains("\"") || val.Contains("\n"))
+                            values.Add($"\"{val.Replace("\"", "\"\"")}\"");
+                        else
+                            values.Add(val);
+                    }
+                    sb.AppendLine(string.Join(",", values));
+                }
+
+                File.WriteAllText(dlg.FileName, sb.ToString(), Encoding.UTF8);
+                Cursor = Cursors.Default;
+                lblStatus.Text = $"Exportados {_allItems.Count} registros a '{Path.GetFileName(dlg.FileName)}'";
+                MessageBox.Show(
+                    $"Se exportaron {_allItems.Count} registros a:\n{dlg.FileName}",
+                    "Exportacion exitosa", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                Cursor = Cursors.Default;
+                MessageBox.Show($"Error al exportar a CSV:\n\n{ex.Message}",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         private void ExportToFile(string format, string filter, Action<List<DataItem>, string> writeAction)
         {
             if (!HasData()) return;
