@@ -22,10 +22,7 @@ namespace ExploradorDeArchivos
         private FormDataBase _formDataBase;
         private FormCorrector _formCorrector;
         private FormEdit _formEdit;
-
-
-
-        // ? NUEVA: Instancia singleton de FormEditarFotos
+        private FormGrabadora _formGrabadora;
         private FormEditarFotos _formEditarFotos;
 
         public Form1()
@@ -581,6 +578,22 @@ namespace ExploradorDeArchivos
             _formEdit = new FormEdit();
             _formEdit.FormClosed += (s, e) => _formEdit = null;
             _formEdit.Show();
+        }
+
+        private void btnFormGrabador_Click(object sender, EventArgs e)
+        {
+            //  Si ya está abierto, solo traerlo al frente
+            if (_formGrabadora != null && !_formGrabadora.IsDisposed)
+            {
+                _formGrabadora.BringToFront();
+                _formGrabadora.WindowState = FormWindowState.Normal;
+                return;
+            }
+
+            //  Si no existe o fue cerrado, crear una nueva instancia
+            _formGrabadora = new FormGrabadora();
+            _formGrabadora.FormClosed += (s, e) => _formGrabadora = null;
+            _formGrabadora.Show();
         }
     }
 }

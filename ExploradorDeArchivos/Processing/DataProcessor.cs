@@ -231,7 +231,7 @@ namespace ExploradorDeArchivos.Processing
         /// Analiza TODOS los items y encuentra automaticamente el mejor par
         /// (campo categorico, campo numerico) para generar una grafica.
         /// Busca primero en campos conocidos de DataItem, luego en ExtraFields.
-        /// Retorna datos agrupados: categoria → suma del valor numerico.
+        /// Retorna datos agrupados: categoria → promedio o suma segun el campo.
         /// </summary>
         public static Dictionary<string, double> AutoDetectChartData(
             List<DataItem> items, out string categoryLabel, out string valueLabel)
@@ -270,7 +270,8 @@ namespace ExploradorDeArchivos.Processing
                 valueLabel = "Price";
                 return GroupKnownFields(items,
                     i => i.Company, i => i.Price,
-                    i => !string.IsNullOrEmpty(i.Company) && i.Price > 0);
+                    i => !string.IsNullOrEmpty(i.Company) && i.Price > 0,
+                    useAverage: true);
             }
             if (hasGenre && hasSales)
             {
@@ -278,7 +279,8 @@ namespace ExploradorDeArchivos.Processing
                 valueLabel = "Sales";
                 return GroupKnownFields(items,
                     i => i.Genre, i => i.Sales,
-                    i => !string.IsNullOrEmpty(i.Genre) && i.Sales > 0);
+                    i => !string.IsNullOrEmpty(i.Genre) && i.Sales > 0,
+                    useAverage: false);
             }
             if (hasTipo && hasStock)
             {
@@ -286,7 +288,8 @@ namespace ExploradorDeArchivos.Processing
                 valueLabel = "Stock";
                 return GroupKnownFields(items,
                     i => i.Tipo, i => (double)i.Stock,
-                    i => !string.IsNullOrEmpty(i.Tipo) && i.Stock > 0);
+                    i => !string.IsNullOrEmpty(i.Tipo) && i.Stock > 0,
+                    useAverage: false);
             }
             if (hasRegion && hasPrice)
             {
@@ -294,7 +297,8 @@ namespace ExploradorDeArchivos.Processing
                 valueLabel = "Price";
                 return GroupKnownFields(items,
                     i => i.Region, i => i.Price,
-                    i => !string.IsNullOrEmpty(i.Region) && i.Price > 0);
+                    i => !string.IsNullOrEmpty(i.Region) && i.Price > 0,
+                    useAverage: true);
             }
             if (hasTitle && hasSales)
             {
@@ -302,7 +306,8 @@ namespace ExploradorDeArchivos.Processing
                 valueLabel = "Sales";
                 return GroupKnownFields(items,
                     i => i.Title, i => i.Sales,
-                    i => !string.IsNullOrEmpty(i.Title) && i.Sales > 0);
+                    i => !string.IsNullOrEmpty(i.Title) && i.Sales > 0,
+                    useAverage: false);
             }
             if (hasTypeName && hasPrice)
             {
@@ -310,7 +315,8 @@ namespace ExploradorDeArchivos.Processing
                 valueLabel = "Price";
                 return GroupKnownFields(items,
                     i => i.TypeName, i => i.Price,
-                    i => !string.IsNullOrEmpty(i.TypeName) && i.Price > 0);
+                    i => !string.IsNullOrEmpty(i.TypeName) && i.Price > 0,
+                    useAverage: true);
             }
             if (hasCompany && hasTemp)
             {
@@ -318,7 +324,8 @@ namespace ExploradorDeArchivos.Processing
                 valueLabel = "Temperatura";
                 return GroupKnownFields(items,
                     i => i.Company, i => i.Temperatura,
-                    i => !string.IsNullOrEmpty(i.Company) && i.Temperatura > 0);
+                    i => !string.IsNullOrEmpty(i.Company) && i.Temperatura > 0,
+                    useAverage: true);
             }
 
             // ── 3. Buscar en ExtraFields ───────────────────────────────────
@@ -447,7 +454,8 @@ namespace ExploradorDeArchivos.Processing
             List<DataItem> items,
             Func<DataItem, string> getCategory,
             Func<DataItem, double> getValue,
-            Func<DataItem, bool> filter)
+            Func<DataItem, bool> filter,
+            bool useAverage = false)
         {
             var result = new Dictionary<string, double>();
             var counts = new Dictionary<string, int>();
@@ -465,6 +473,13 @@ namespace ExploradorDeArchivos.Processing
                 }
                 result[cat] += getValue(item);
                 counts[cat]++;
+            }
+
+            if (useAverage)
+            {
+                foreach (var key in counts.Keys)
+                    if (counts[key] > 0)
+                        result[key] = result[key] / counts[key];
             }
 
             return result;
@@ -686,6 +701,303 @@ namespace ExploradorDeArchivos.Processing
             }
 
             return pairs;
+        }
+
+        // ════════════════════════════════════════════════════════════════════
+        //  DETECCION INTELIGENTE DE PARES PARA LAS 4 GRAFICAS
+        // ════════════════════════════════════════════════════════════════════
+
+        /// <summary>
+        /// Resultado de un par categorico-numerico con metricas de calidad.
+        /// </summary>
+        public sealed class ChartPairInfo
+        {
+            public string CategoryField { get; init; } = "";
+            public string ValueField { get; init; } = "";
+            public Dictionary<string, double> GroupedData { get; init; } = new();
+            /// <summary>Numero de categorias distintas (grupos).</summary>
+            public int UniqueCats => GroupedData.Count;
+            /// <summary>"Promedio" si el campo se promedia, "Total" si se suma.</summary>
+            public string AggregationLabel { get; init; } = "Total";
+        }
+
+        /// <summary>
+        /// Detecta hasta 4 pares (campo_categorico, campo_numerico) de calidad,
+        /// filtrando columnas tipo ID (todos valores unicos), columnas con un
+        /// solo valor unico, y columnas numericas con mayoria cero.
+        /// Los pares se ordenan para que el grafico correcto use el par idoneo:
+        ///   [0] = barras (hasta 15 cat)
+        ///   [1] = pastel (preferentemente 3-10 cat)
+        ///   [2] = anillo (igual que pastel, diferente campo si es posible)
+        ///   [3] = lineas (serie temporal o ranking de valores)
+        /// </summary>
+        public static List<ChartPairInfo> AutoDetectSmartPairs(
+            List<DataItem> items, int maxPairs = 4)
+        {
+            if (items.Count == 0)
+                return new List<ChartPairInfo>();
+
+            var (rawStringFields, rawNumericFields) = DiscoverFields(items);
+
+            // ── Filtrar campos categoricos de baja calidad ─────────────────
+            var catFields = new List<(string field, int uniqueCount)>();
+            foreach (var f in rawStringFields)
+            {
+                var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                int total = 0;
+                foreach (var item in items)
+                {
+                    string v = GetStringValue(item, f);
+                    if (!string.IsNullOrWhiteSpace(v))
+                    {
+                        seen.Add(v);
+                        total++;
+                    }
+                }
+                if (total < 2) continue;                   // campo casi vacio
+                if (seen.Count == 1) continue;             // todos iguales
+                if (seen.Count > total * 0.9) continue;    // casi todo unico (ID)
+                catFields.Add((f, seen.Count));
+            }
+
+            // ── Filtrar campos numericos de baja calidad ───────────────────
+            var numFields = new List<string>();
+            foreach (var f in rawNumericFields)
+            {
+                int zeros = 0, total = 0;
+                foreach (var item in items)
+                {
+                    double v = GetNumericValue(item, f);
+                    total++;
+                    if (v == 0) zeros++;
+                }
+                if (total == 0) continue;
+                if ((double)zeros / total > 0.85) continue; // mayoria cero
+                numFields.Add(f);
+            }
+
+            if (catFields.Count == 0 || numFields.Count == 0)
+                return new List<ChartPairInfo>();
+
+            // ── Generar todos los pares validos ────────────────────────────
+            var candidates = new List<(int uniqueCats, string cat, string num,
+                                       Dictionary<string, double> data)>();
+
+            foreach (var (catField, _) in catFields)
+            {
+                foreach (var numField in numFields)
+                {
+                    var grouped = GroupByFields(items, catField, numField);
+                    if (grouped.Count < 2) continue;
+                    candidates.Add((grouped.Count, catField, numField, grouped));
+                }
+            }
+
+            if (candidates.Count == 0)
+                return new List<ChartPairInfo>();
+
+            // ── Ordenar candidatos por numero de categorias (asc) ──────────
+            for (int i = 1; i < candidates.Count; i++)
+            {
+                var cur = candidates[i];
+                int j = i - 1;
+                while (j >= 0 && candidates[j].uniqueCats > cur.uniqueCats)
+                {
+                    candidates[j + 1] = candidates[j];
+                    j--;
+                }
+                candidates[j + 1] = cur;
+            }
+
+            // ── Seleccionar pares diversos (evitar repetir mismo par) ──────
+            var result = new List<ChartPairInfo>();
+            var usedPairs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            // Pastel/Anillo: preferir pares con 3-10 categorias
+            // Barras: pares con hasta 15 categorias
+            // Lineas: par con mas categorias (ranking) o distinto campo numerico
+
+            // Ordenar: primero los que caben bien en pastel (<=10), luego el resto
+            var pieFirst = new List<(int uniqueCats, string cat, string num,
+                                     Dictionary<string, double> data)>();
+            var barFirst = new List<(int uniqueCats, string cat, string num,
+                                     Dictionary<string, double> data)>();
+
+            foreach (var c in candidates)
+            {
+                if (c.uniqueCats >= 2 && c.uniqueCats <= 10)
+                    pieFirst.Add(c);
+                else
+                    barFirst.Add(c);
+            }
+
+            // [0] Barras — mayor riqueza (mas categorias <= 15)
+            var barCandidates = new List<(int, string, string,
+                                          Dictionary<string, double>)>(barFirst);
+            barCandidates.AddRange(pieFirst);
+            // ordenar desc para barras
+            for (int i = 1; i < barCandidates.Count; i++)
+            {
+                var cur = barCandidates[i];
+                int j = i - 1;
+                while (j >= 0 && barCandidates[j].Item1 < cur.Item1)
+                {
+                    barCandidates[j + 1] = barCandidates[j];
+                    j--;
+                }
+                barCandidates[j + 1] = cur;
+            }
+
+            foreach (var c in barCandidates)
+            {
+                string key = $"{c.Item2}|{c.Item3}";
+                if (!usedPairs.Add(key)) continue;
+                result.Add(new ChartPairInfo
+                {
+                    CategoryField = c.Item2,
+                    ValueField = c.Item3,
+                    GroupedData = c.Item4,
+                    AggregationLabel = IsAveragingField(c.Item3) ? "Promedio" : "Total"
+                });
+                break;
+            }
+
+            // [1] Pastel — pocas categorias
+            foreach (var c in pieFirst)
+            {
+                string key = $"{c.cat}|{c.num}";
+                if (!usedPairs.Add(key)) continue;
+                result.Add(new ChartPairInfo
+                {
+                    CategoryField = c.cat,
+                    ValueField = c.num,
+                    GroupedData = c.data,
+                    AggregationLabel = IsAveragingField(c.num) ? "Promedio" : "Total"
+                });
+                break;
+            }
+            // Si no habia pie con <=10, tomar cualquiera diferente al de barras
+            if (result.Count < 2)
+            {
+                foreach (var c in candidates)
+                {
+                    string key = $"{c.cat}|{c.num}";
+                    if (!usedPairs.Add(key)) continue;
+                    result.Add(new ChartPairInfo
+                    {
+                        CategoryField = c.cat,
+                        ValueField = c.num,
+                        GroupedData = c.data,
+                        AggregationLabel = IsAveragingField(c.num) ? "Promedio" : "Total"
+                    });
+                    break;
+                }
+            }
+
+            // [2] Anillo — diferente al pastel si es posible
+            foreach (var c in pieFirst)
+            {
+                string key = $"{c.cat}|{c.num}";
+                if (!usedPairs.Add(key)) continue;
+                result.Add(new ChartPairInfo
+                {
+                    CategoryField = c.cat,
+                    ValueField = c.num,
+                    GroupedData = c.data,
+                    AggregationLabel = IsAveragingField(c.num) ? "Promedio" : "Total"
+                });
+                break;
+            }
+            // Si no hay otro, reusar el de pastel
+            if (result.Count < 3 && result.Count >= 2)
+                result.Add(result[result.Count - 1]);
+
+            // [3] Lineas — diferente campo numerico si es posible
+            foreach (var c in candidates)
+            {
+                string key = $"{c.cat}|{c.num}";
+                if (!usedPairs.Add(key)) continue;
+                result.Add(new ChartPairInfo
+                {
+                    CategoryField = c.cat,
+                    ValueField = c.num,
+                    GroupedData = c.data,
+                    AggregationLabel = IsAveragingField(c.num) ? "Promedio" : "Total"
+                });
+                break;
+            }
+            // Si solo hay un par total, reusar para lineas
+            if (result.Count < 4 && result.Count > 0)
+                result.Add(result[0]);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Determina si un campo numerico debe promediar (true) o sumar (false).
+        /// Solo suman los campos acumulables bien conocidos (ventas, stock, conteos).
+        /// Cualquier otro campo (precio, edad, temperatura, salario, puntuacion, etc.)
+        /// se promedia, ya que sumarlos por categoria produce cifras sin sentido.
+        /// </summary>
+        public static bool IsAveragingField(string fieldName)
+        {
+            string f = fieldName.ToLowerInvariant();
+
+            // ── Campos acumulables (suma tiene sentido) ────────────────────
+            if (f == "sales" || f == "ventas" || f == "stock"
+                || f == "cantidad" || f == "count" || f == "conteo"
+                || f == "total" || f == "units" || f == "unidades"
+                || f == "orders" || f == "pedidos" || f == "downloads"
+                || f == "descargas")
+                return false;
+
+            // Nombres compuestos acumulables
+            if (f.Contains("ventas") || f.Contains("sales")
+                || f.Contains("stock") || f.Contains("units")
+                || f.Contains("count") || f.Contains("total_")
+                || f.StartsWith("total") && f.Length > 5)
+                return false;
+
+            // ── Todo lo demas se promedia ──────────────────────────────────
+            // Precio, edad, salario, temperatura, fps, ram, puntuacion,
+            // calificacion, peso, altura, nota, score, rate, ratio, etc.
+            return true;
+        }
+
+        private static Dictionary<string, double> GroupByFields(
+            List<DataItem> items, string catField, string numField)
+        {
+            bool useAvg = IsAveragingField(numField);
+
+            var sumMap = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+            var countMap = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var item in items)
+            {
+                string cat = GetStringValue(item, catField);
+                if (string.IsNullOrWhiteSpace(cat)) continue;
+                double val = GetNumericValue(item, numField);
+                if (val == 0) continue;
+
+                if (!sumMap.ContainsKey(cat))
+                {
+                    sumMap[cat] = 0;
+                    countMap[cat] = 0;
+                }
+                sumMap[cat] += val;
+                countMap[cat]++;
+            }
+
+            var result = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+            foreach (var key in sumMap.Keys)
+            {
+                if (countMap[key] == 0) continue;
+                result[key] = useAvg
+                    ? sumMap[key] / countMap[key]  // promedio
+                    : sumMap[key];                  // suma
+            }
+
+            return result;
         }
 
         // ════════════════════════════════════════════════════════════════════

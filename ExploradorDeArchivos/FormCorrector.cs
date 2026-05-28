@@ -22,10 +22,17 @@ namespace ExploradorDeArchivos
         // Índice rápido: (rowIndex, columnName) → CellError para el CellFormatting.
         private HashSet<(int, string)> _cellErrorIndex = [];
 
+        // Celdas que fueron corregidas por la limpieza: (rowIndex, col) → valor original.
+        private Dictionary<(int, string), string> _cleanedCells = [];
+
         public FormCorrector()
         {
             InitializeComponent();
             EnableDoubleBuffer(dgvDatos);
+
+            // Owner-draw en el log para colorear líneas por tipo
+            lstErrores.DrawMode = DrawMode.OwnerDrawFixed;
+            lstErrores.DrawItem += LstErrores_DrawItem;
         }
 
         // Activa el doble buffer del DataGridView (propiedad protegida, requiere reflexión).
@@ -65,6 +72,7 @@ namespace ExploradorDeArchivos
                 var result = await Task.Run(() => RunPipeline(filePath, orderBy));
 
                 _validRows = result.ValidRows;
+                _cleanedCells.Clear();
 
                 // Inferencia de tipos y detección de celdas erróneas.
                 _inference = await Task.Run(() => _inferrer.Infer(_validRows));
@@ -87,7 +95,8 @@ namespace ExploradorDeArchivos
                 lstErrores.Items.Clear();
                 if (result.ErrorLog.Count > 0)
                 {
-                    lstErrores.Items.AddRange(result.ErrorLog.ToArray<object>());
+                    foreach (var entry in result.ErrorLog)
+                        lstErrores.Items.Add("⚠ " + entry);
                     lblErrores.Text = $"Errores de validación  ({result.InvalidRows.Count} fila(s) rechazada(s))";
                 }
                 else
@@ -98,8 +107,32 @@ namespace ExploradorDeArchivos
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al procesar el archivo:\n{ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // AggregateException de Task.Run, InvalidDataException propia o cualquier otro error
+                var inner = ex is AggregateException ag ? ag.InnerException ?? ex : ex;
+                var msg = inner is InvalidDataException ide ? ide.Message : inner.Message;
+                var icon = inner is InvalidDataException
+                    ? MessageBoxIcon.Warning
+                    : MessageBoxIcon.Error;
+                var title = inner is InvalidDataException
+                    ? "Archivo no válido"
+                    : "Error inesperado";
+
+                _validRows = Array.Empty<IDictionary<string, object>>();
+                _cleanedCells.Clear();
+                dgvDatos.DataSource = null;
+                dgvDatos.Columns.Clear();
+                lstErrores.Items.Clear();
+                lstErrores.Items.Add("✖ " + msg);
+                lblErrores.Text = "Error al leer el archivo";
+                lblDatos.Text = "Datos válidos  (0 fila(s))";
+                btnGuardarCorrecciones.Enabled = false;
+                btnExportar.Enabled = false;
+                btnLimpiarDatos.Enabled = false;
+                MessageBox.Show(
+                    $"No se pudo procesar el archivo.\n\n{msg}",
+                    title,
+                    MessageBoxButtons.OK,
+                    icon);
             }
             finally
             {
@@ -128,6 +161,32 @@ namespace ExploradorDeArchivos
             var (cleaned, changeLog) = DataCleaner.Clean(_validRows, typesToUse);
             _validRows = cleaned;
 
+            // Construir índice de celdas corregidas a partir del changeLog.
+            // Formato de cada entrada: "Fila N, 'col': \"original\" → \"nuevo\""
+            _cleanedCells.Clear();
+            foreach (var entry in changeLog)
+            {
+                // Extraer fila (base-1 en el log, base-0 en el grid)
+                if (!entry.StartsWith("Fila ")) continue;
+                int commaIdx = entry.IndexOf(',');
+                if (commaIdx < 0) continue;
+                if (!int.TryParse(entry[5..commaIdx].Trim(), out int logRow)) continue;
+                int rowIdx = logRow - 1;
+
+                // Extraer nombre de columna entre comillas simples
+                int q1 = entry.IndexOf('\'', commaIdx);
+                int q2 = entry.IndexOf('\'', q1 + 1);
+                if (q1 < 0 || q2 < 0) continue;
+                string colName = entry[(q1 + 1)..q2];
+
+                // Extraer valor original entre primeras comillas dobles
+                int d1 = entry.IndexOf('"', q2);
+                int d2 = entry.IndexOf('"', d1 + 1);
+                string original = d1 >= 0 && d2 > d1 ? entry[(d1 + 1)..d2] : "";
+
+                _cleanedCells[(rowIdx, colName)] = original;
+            }
+
             // Re-inferir tras la limpieza
             _inference = _inferrer.Infer(_validRows);
             _cellErrorIndex = BuildErrorIndex(_inference.CellErrors);
@@ -137,21 +196,28 @@ namespace ExploradorDeArchivos
 
             int numInText = _inference.CellErrors.Count(e => e.ErrorKind == CellErrorKind.UnexpectedNumeric);
             int textInType = _inference.CellErrors.Count - numInText;
-            lblTiposError.Text = _inference.CellErrors.Count > 0
-                ? $"⚠ {textInType} texto en col. numérica/fecha (🟠)  |  {numInText} número en col. de texto (🔴)"
-                : "✔ Sin errores de tipo detectados.";
+
+            if (_inference.CellErrors.Count > 0)
+                lblTiposError.Text = $"⚠ {textInType} texto en col. numérica/fecha (🟠)  |  {numInText} número en col. de texto (🔴)";
+            else if (changeLog.Count > 0)
+                lblTiposError.Text = $"✔ Limpieza completa. {changeLog.Count} celda(s) corregida(s). Los errores han sido resueltos.";
+            else
+                lblTiposError.Text = "✔ Sin errores de tipo detectados.";
 
             lblDatos.Text = $"Datos válidos  ({_validRows.Count} fila(s))";
 
-            // Mostrar el log de cambios
+            // Mostrar el log de cambios en la lista
             lstErrores.Items.Clear();
             if (changeLog.Count > 0)
             {
-                lstErrores.Items.AddRange(changeLog.ToArray<object>());
-                lblErrores.Text = $"Log de limpieza  ({changeLog.Count} celda(s) modificada(s))";
-                MessageBox.Show($"Limpieza completada: {changeLog.Count} celda(s) modificada(s).\n" +
-                                "Revisa el log en la parte inferior.",
-                    "Limpiar datos", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                foreach (var entry in changeLog)
+                    lstErrores.Items.Add("✅ " + entry);
+                lblErrores.Text = $"Celdas corregidas por limpieza  ({changeLog.Count} cambio(s)) — verde en la tabla";
+                MessageBox.Show(
+                    $"Limpieza completada: {changeLog.Count} celda(s) modificada(s).\n\n" +
+                    "Las celdas corregidas aparecen en verde en la tabla.\n" +
+                    "Revisa el detalle en el log inferior.",
+                    "Limpieza completada", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             else
             {
@@ -240,19 +306,33 @@ namespace ExploradorDeArchivos
             }
         }
 
-        // ── CellFormatting: pinta en naranja las celdas con tipo incorrecto ───────
+        // ── CellFormatting: colorea celdas con error (naranja/rojo) y corregidas (verde) ─
         private void DgvDatos_CellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
         {
             if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
             if (dgvDatos.Columns[e.ColumnIndex] is not DataGridViewColumn col) return;
 
-            if (_cellErrorIndex.Contains((e.RowIndex, col.Name)))
+            var key = (e.RowIndex, col.Name);
+
+            // 1. Celda ya corregida por la limpieza → verde
+            if (_cleanedCells.TryGetValue(key, out var originalValue))
+            {
+                e.CellStyle.BackColor = Color.FromArgb(180, 230, 180);
+                e.CellStyle.SelectionBackColor = Color.MediumSeaGreen;
+                e.FormattingApplied = true;
+                dgvDatos.Rows[e.RowIndex].Cells[e.ColumnIndex].ToolTipText =
+                    $"✔ Corregido — valor original: \"{originalValue}\"";
+                return;
+            }
+
+            // 2. Celda con error de tipo detectado → naranja / rojo
+            if (_cellErrorIndex.Contains(key))
             {
                 var errorInfo = _inference?.CellErrors
                     .FirstOrDefault(c => c.RowIndex == e.RowIndex && c.Column == col.Name);
 
-                // Naranja: texto donde debería haber número o fecha.
-                // Rojo claro: número donde debería haber texto.
+                // 🟠 Naranja: texto donde debería haber número o fecha.
+                // 🔴 Rojo claro: número donde debería haber texto.
                 (e.CellStyle.BackColor, e.CellStyle.SelectionBackColor) =
                     errorInfo?.ErrorKind == CellErrorKind.UnexpectedNumeric
                         ? (Color.FromArgb(255, 160, 160), Color.IndianRed)
@@ -262,12 +342,12 @@ namespace ExploradorDeArchivos
 
                 if (errorInfo is not null)
                     dgvDatos.Rows[e.RowIndex].Cells[e.ColumnIndex].ToolTipText =
-                        errorInfo.Description;
+                        $"⚠ {errorInfo.Description}\n→ Usa 'Limpiar datos' para corregirlo automáticamente.";
+                return;
             }
-            else
-            {
-                e.FormattingApplied = false;
-            }
+
+            e.FormattingApplied = false;
+            dgvDatos.Rows[e.RowIndex].Cells[e.ColumnIndex].ToolTipText = string.Empty;
         }
 
         // ── Construye el índice rápido de errores ─────────────────────────────────
@@ -277,6 +357,47 @@ namespace ExploradorDeArchivos
             foreach (var err in errors)
                 index.Add((err.RowIndex, err.Column));
             return index;
+        }
+
+        // ── Owner-draw del log: verde para corregidas, amarillo para advertencias ─
+        private static void LstErrores_DrawItem(object? sender, DrawItemEventArgs e)
+        {
+            if (e.Index < 0 || sender is not ListBox lb) return;
+
+            var text = lb.Items[e.Index]?.ToString() ?? string.Empty;
+
+            Color bg = e.BackColor;
+            Color fg = e.ForeColor;
+
+            if ((e.State & DrawItemState.Selected) == 0)
+            {
+                if (text.StartsWith("✅"))
+                {
+                    bg = Color.FromArgb(210, 240, 210);  // verde suave
+                    fg = Color.DarkGreen;
+                }
+                else if (text.StartsWith("✔"))
+                {
+                    bg = Color.FromArgb(235, 255, 235);  // verde muy claro
+                    fg = Color.SeaGreen;
+                }
+                else if (text.StartsWith("⚠"))
+                {
+                    bg = Color.FromArgb(255, 248, 200);  // amarillo suave
+                    fg = Color.DarkOrange;
+                }
+                else if (text.StartsWith("✖") || text.StartsWith("❌"))
+                {
+                    bg = Color.FromArgb(255, 220, 220);  // rojo suave
+                    fg = Color.Firebrick;
+                }
+            }
+
+            e.Graphics.FillRectangle(new SolidBrush(bg), e.Bounds);
+            using var font = new Font(lb.Font, FontStyle.Regular);
+            e.Graphics.DrawString(text, font, new SolidBrush(fg),
+                e.Bounds with { X = e.Bounds.X + 2 });
+            e.DrawFocusRectangle();
         }
 
         // ── Actualiza el DataGridView y reaplica los filtros activos ─────────────
@@ -416,9 +537,36 @@ namespace ExploradorDeArchivos
         // ── Lógica de negocio ejecutada en hilo de fondo ─────────────────────────
         private PipelineResult RunPipeline(string filePath, string? orderBy)
         {
-            IFileReader reader = CreateReader(filePath);
-            var rows = reader.ReadFile(filePath);
-            return _pipeline.Execute(rows, orderBy);
+            try
+            {
+                IFileReader reader = CreateReader(filePath);
+                var rows = reader.ReadFile(filePath);
+                return _pipeline.Execute(rows, orderBy);
+            }
+            catch (InvalidDataException)
+            {
+                throw;  // ya tiene mensaje descriptivo para el usuario
+            }
+            catch (FileNotFoundException ex)
+            {
+                throw new InvalidDataException(
+                    $"No se encontró el archivo:\n{ex.FileName}", ex);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                throw new InvalidDataException(
+                    $"Sin permisos para leer el archivo.\nCierre el archivo si está abierto en otra aplicación.\nDetalle: {ex.Message}", ex);
+            }
+            catch (IOException ex)
+            {
+                throw new InvalidDataException(
+                    $"Error de lectura del archivo. Puede estar en uso o corrupto.\nDetalle: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidDataException(
+                    $"El archivo no pudo procesarse.\nVerifique que no esté corrupto ni en un formato no compatible.\nDetalle: {ex.Message}", ex);
+            }
         }
 
         private static IFileReader CreateReader(string path)
@@ -429,6 +577,16 @@ namespace ExploradorDeArchivos
             if (ext == ".json") return new JsonFileReader();
             if (ext == ".xml") return new XmlFileReader();
             if (ext == ".csv") return new CsvFileReader(',');
+            if (ext == ".xlsx") return new ExcelFileReader();
+            if (ext == ".docx") return new WordFileReader();
+            if (ext == ".xls")
+                throw new InvalidDataException(
+                    "El formato .xls (Excel 97-2003) no está soportado.\n" +
+                    "Abra el archivo en Excel y guárdelo como .xlsx (Libro de Excel).");
+            if (ext == ".doc")
+                throw new InvalidDataException(
+                    "El formato .doc (Word 97-2003) no está soportado.\n" +
+                    "Abra el archivo en Word y guárdelo como .docx (Documento de Word).");
 
             // Para extensiones ambiguas (.txt, .tsv, sin extensión, etc.)
             // usamos sniffing del contenido para elegir el lector correcto.

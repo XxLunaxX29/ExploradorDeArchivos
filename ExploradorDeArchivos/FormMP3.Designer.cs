@@ -60,6 +60,7 @@
             btnEdit = new Button();
             btnSavePlaylist = new Button();
             btnEliminar = new Button();
+            listBoxLetras = new ListBox();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)trackDuracion).BeginInit();
             ((System.ComponentModel.ISupportInitialize)trackVolumen).BeginInit();
@@ -376,12 +377,23 @@
             btnEliminar.UseVisualStyleBackColor = true;
             btnEliminar.Click += btnEliminar_Click;
             // 
+            // listBoxLetras
+            // 
+            listBoxLetras.BackColor = Color.FromArgb(24, 24, 24);
+            listBoxLetras.ForeColor = Color.White;
+            listBoxLetras.FormattingEnabled = true;
+            listBoxLetras.Location = new Point(777, 75);
+            listBoxLetras.Name = "listBoxLetras";
+            listBoxLetras.Size = new Size(261, 304);
+            listBoxLetras.TabIndex = 35;
+            // 
             // FormMP3
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(18, 18, 18);
             ClientSize = new Size(1353, 710);
+            Controls.Add(listBoxLetras);
             Controls.Add(btnEliminar);
             Controls.Add(btnSavePlaylist);
             Controls.Add(btnEdit);
@@ -464,5 +476,6 @@
         private Button btnEdit;
         private Button btnSavePlaylist;
         private Button btnEliminar;
+        private ListBox listBoxLetras;
     }
 }

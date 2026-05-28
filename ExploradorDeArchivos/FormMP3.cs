@@ -28,19 +28,18 @@ namespace ExploradorDeArchivos
         private int[] ordenAleatorio;
         private int indiceShuffle = 0;
 
+        // Agregar este campo en la clase FormMP3
+        private MusicMetadataFetcher _metadataFetcher;
+        private MusicMetadataFetcher _musicFetcher;
         public FormMP3()
         {
             InitializeComponent();
-            
-            // Hacer que el formulario sea reutilizable
+          //  _musicFetcher = new MusicMetadataFetcher("0ea2be936ec7419abbb440b806b34aa9", "8c0371ae2ff849a28da6c25935dcc62e", "IOSnEinv18eVvuJXfneYTML287cEol2kggWCOlBtqUdlznnCBzacDghWCdhSrY7L"); this.StartPosition = FormStartPosition.CenterParent;
             this.StartPosition = FormStartPosition.CenterParent;
-            
-            // Configurar el timer antes de iniciarlo
             timer1.Interval = 500;
             timer1.Tick += timer1_Tick;
             timer1.Start();
 
-            // Configurar dibujo personalizado del ListBox
             lstLista.DrawMode = DrawMode.OwnerDrawFixed;
             lstLista.DrawItem += listBox1_DrawItem;
             lstLista.ItemHeight = 20;
@@ -56,6 +55,20 @@ namespace ExploradorDeArchivos
             {
                 // Si falla, continúa sin imagen
             }
+
+            // =========================================================================
+            //  INICIALIZACIÓN CORRECTA Y UNIFICADA DE METADATOS
+            // =========================================================================
+            const string geniusToken = "IOSnEinv18eVvuJXfneYTML287cEol2kggWCOlBtqUdlznnCBzacDghWCdhSrY7L";
+            const string spotifyClientId = "0ea2be936ec7419abbb440b806b34aa9";
+            const string spotifyClientSecret = "8c0371ae2ff849a28da6c25935dcc62e";
+
+            // Asignamos las constantes en el orden estricto que requiere tu clase:
+            // 1º GeniusToken, 2º SpotifyID, 3º SpotifySecret
+            _metadataFetcher = new MusicMetadataFetcher(geniusToken, spotifyClientId, spotifyClientSecret);
+
+            // Apuntamos la segunda variable a la misma instancia por si se usa en otra parte del código viejo
+            _musicFetcher = _metadataFetcher;
         }
         private void RecalcularShuffle()
         {
@@ -93,7 +106,7 @@ namespace ExploradorDeArchivos
             ordenAleatorio = nuevoOrden.ToArray();
             indiceShuffle = 0;
 
-            // Mantener la canción actual reproduciéndose
+            // Mantener la canción actual reproduciendo
             if (actual >= 0)
             {
                 lstLista.SelectedIndex = actual;
@@ -405,30 +418,206 @@ namespace ExploradorDeArchivos
         }
 
 
-        private void MostrarPortadaDesdeMP3(Cancion cancion)
+        /// <summary>
+        /// Busca letras y portadas faltantes en internet de forma asincrónica
+        /// </summary>
+        private async void BuscarYActualizarMetadatosAsync(Cancion cancion)
         {
             try
             {
-                using var archivo = TagLibFile.Create(cancion.Ruta);
+                System.Diagnostics.Debug.WriteLine($"🔍 Iniciando búsqueda de metadatos para: {cancion.Nombre}");
 
-                if (archivo.Tag.Pictures.Length > 0)
+                // ✅ Esperar a que se completen las búsquedas
+                bool actualizado = await _metadataFetcher.ActualizarMetadatosDelArchivoAsync(cancion.Ruta);
+
+                if (actualizado)
                 {
-                    // Obtener la primera imagen
-                    var bin = (byte[])archivo.Tag.Pictures[0].Data.Data;
+                    System.Diagnostics.Debug.WriteLine($"✅ Metadatos actualizados, recargando interfaz...");
 
-                    using (MemoryStream ms = new MemoryStream(bin))
+                    // ✅ Esperar un poco para asegurar que el archivo se escribió correctamente
+                    await Task.Delay(500);
+
+                    // ✅ Solo recargar la interfaz si realmente se descargó algo
+                    // Usar Invoke para actualizar desde el hilo UI
+                    if (InvokeRequired)
                     {
-                        pictureBoxAlbum.Image = Image.FromStream(ms);
+                        Invoke(new Action(() =>
+                        {
+                            // Verificar que la canción actual sea la misma
+                            if (rutaCancionActual == cancion.Ruta)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"🖼️ Recargar portada en UI...");
+                                
+                                // ✅ Mostrar portada
+                                MostrarPortadaDesdeMP3(cancion);
+                                
+                                // ✅ NUEVO: Mostrar letra en listBox1
+                                MostrarLetraEnListBox(cancion);
+                                
+                                VerPropiedades(cancion);
+                                
+                                System.Diagnostics.Debug.WriteLine("✅ Portada y letra actualizadas en la interfaz");
+                            }
+                            else
+                            {
+                                System.Diagnostics.Debug.WriteLine($"⚠️ La canción actual cambió, no se actualiza la interfaz");
+                            }
+                        }));
+                    }
+                    else
+                    {
+                        if (rutaCancionActual == cancion.Ruta)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"🖼️ Recargar portada (sin invoke)...");
+                            
+                            // ✅ Mostrar portada
+                            MostrarPortadaDesdeMP3(cancion);
+                            
+                            // ✅ NUEVO: Mostrar letra en listBox1
+                            MostrarLetraEnListBox(cancion);
+                            
+                            VerPropiedades(cancion);
+                            
+                            System.Diagnostics.Debug.WriteLine("✅ Portada y letra actualizadas en la interfaz");
+                        }
                     }
                 }
                 else
                 {
-                    pictureBoxAlbum.Image = Foto.Aggregate(Image.FromFile(Foto), (current, _) => current);
+                    System.Diagnostics.Debug.WriteLine($"⚠️ No se encontraron metadatos para actualizar");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al cargar la portada: " + ex.Message);
+                System.Diagnostics.Debug.WriteLine($"❌ Error al buscar metadatos: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Muestra la letra de la canción en el listBox1
+        /// </summary>
+        private void MostrarLetraEnListBox(Cancion cancion)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"📝 Leyendo letra del archivo: {cancion.Ruta}");
+
+                using (var archivo = TagLibFile.Create(cancion.Ruta))
+                {
+                    string letra = archivo.Tag.Lyrics;
+
+                    if (!string.IsNullOrWhiteSpace(letra))
+                    {
+                        System.Diagnostics.Debug.WriteLine($"✅ Letra encontrada ({letra.Length} caracteres)");
+
+                        // ✅ Limpiar listBox1
+                        listBoxLetras.Items.Clear();
+
+                        // ✅ Dividir la letra por líneas
+                        string[] lineas = letra.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+
+                        // ✅ Agregar cada línea al listBox1
+                        foreach (string linea in lineas)
+                        {
+                            listBoxLetras.Items.Add(linea);
+                        }
+
+                        System.Diagnostics.Debug.WriteLine($"✅ Letra mostrada en listBox1 ({lineas.Length} líneas)");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"⚠️ No hay letra en el archivo MP3");
+                        
+                        // Limpiar listBox1
+                        listBoxLetras.Items.Clear();
+                        listBoxLetras.Items.Add("(Sin letra disponible)");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error al mostrar letra: {ex.Message}");
+                listBoxLetras.Items.Clear();
+                listBoxLetras.Items.Add("(Error al cargar la letra)");
+            }
+        }
+
+        private void MostrarPortadaDesdeMP3(Cancion cancion)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"📀 Leyendo portada del archivo: {cancion.Ruta}");
+
+                // ✅ IMPORTANTE: Usar using para asegurar que se libera el archivo
+                using (var archivo = TagLibFile.Create(cancion.Ruta))
+                {
+                    if (archivo.Tag.Pictures.Length > 0)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"✅ Se encontraron {archivo.Tag.Pictures.Length} imágenes en el archivo");
+
+                        // Obtener la primera imagen
+                        var bin = (byte[])archivo.Tag.Pictures[0].Data.Data;
+                        System.Diagnostics.Debug.WriteLine($"📸 Tamaño de la imagen: {bin.Length} bytes");
+
+                        // ✅ Crear imagen desde los datos binarios sin referencia al archivo
+                        using (MemoryStream ms = new MemoryStream(bin))
+                        {
+                            Image nuevaImagen = Image.FromStream(ms);
+                            
+                            // ✅ Liberar imagen anterior si existe
+                            if (pictureBoxAlbum.Image != null)
+                            {
+                                try
+                                {
+                                    pictureBoxAlbum.Image.Dispose();
+                                }
+                                catch { }
+                            }
+                            
+                            pictureBoxAlbum.Image = nuevaImagen;
+                            System.Diagnostics.Debug.WriteLine($"✅ Portada mostrada en PictureBox ({bin.Length} bytes)");
+                        }
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"⚠️ No hay imágenes en el archivo MP3");
+                        
+                        // Mostrar imagen por defecto
+                        if (pictureBoxAlbum.Image != null)
+                        {
+                            try
+                            {
+                                pictureBoxAlbum.Image.Dispose();
+                            }
+                            catch { }
+                        }
+                        
+                        try
+                        {
+                            pictureBoxAlbum.Image = Image.FromFile(Foto);
+                            System.Diagnostics.Debug.WriteLine($"📀 Imagen por defecto mostrada");
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"❌ Error cargando imagen por defecto: {ex.Message}");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error al cargar portada: {ex.Message}");
+                
+                // Fallback a imagen por defecto
+                try
+                {
+                    if (pictureBoxAlbum.Image != null)
+                    {
+                        pictureBoxAlbum.Image.Dispose();
+                    }
+                    pictureBoxAlbum.Image = Image.FromFile(Foto);
+                }
+                catch { }
             }
         }
 
@@ -660,8 +849,13 @@ namespace ExploradorDeArchivos
                 lblName.Text = "";
                 trackDuracion.Value = 0;
 
-                pictureBoxAlbum.Image = Foto.Aggregate(Image.FromFile(Foto), (current, _) => current);
-
+                //   pictureBoxAlbum.Image = Foto.Aggregate(Image.FromFile(Foto), (current, _) => current);
+                // CORREGIDO: Se eliminó el Aggregate innecesario y peligroso
+                if (!string.IsNullOrEmpty(Foto) && File.Exists(Foto))
+                {
+                    pictureBoxAlbum.Image?.Dispose(); // Liberar imagen anterior si existe
+                    pictureBoxAlbum.Image = Image.FromFile(Foto);
+                }
             }
 
             // Forzar redibujo del ListBox
@@ -1098,9 +1292,7 @@ namespace ExploradorDeArchivos
             RecalcularShuffle();
         }
 
-
-
-        private void ReproducirCancion(Cancion cancion)
+        private async void ReproducirCancion(Cancion cancion)
         {
             try
             {
@@ -1123,6 +1315,36 @@ namespace ExploradorDeArchivos
 
                 VerPropiedades(cancion);
                 MostrarPortadaDesdeMP3(cancion);
+
+                // =================================================================
+                // 🔄 CONSULTA ASÍNCRONA EN SEGUNDO PLANO (APIs)
+                // =================================================================
+                bool resultado = await _musicFetcher.ActualizarMetadatosDelArchivoAsync(cancion.Ruta);
+
+                // Rompa o no la escritura en disco, los datos ya están en la RAM
+                if (!string.IsNullOrEmpty(MusicMetadataFetcher.UltimaLetraDescargada))
+                {
+                    listBoxLetras.Items.Clear();
+
+                    // ✂️ Separamos el bloque de texto por cada salto de línea (\n)
+                    string[] lineasDeLaLetra = MusicMetadataFetcher.UltimaLetraDescargada
+                        .Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+
+                    // ➕ Agregamos cada renglón de manera individual al ListBox
+                    foreach (string linea in lineasDeLaLetra)
+                    {
+                        listBoxLetras.Items.Add(linea);
+                    }
+                }
+
+                if (MusicMetadataFetcher.UltimaPortadaDescargada != null)
+                {
+                    using (var ms = new MemoryStream(MusicMetadataFetcher.UltimaPortadaDescargada))
+                    {
+                        pictureBoxAlbum.Image = Image.FromStream(ms);
+                    }
+                }
+                // =================================================================
             }
             catch (Exception ex)
             {

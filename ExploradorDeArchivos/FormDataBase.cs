@@ -1,14 +1,19 @@
-﻿using ExploradorDeArchivos.Data;
+﻿using DocumentFormat.OpenXml.Packaging;
+using OxlSheet = DocumentFormat.OpenXml.Spreadsheet;
+using ExploradorDeArchivos.Data;
 using ExploradorDeArchivos.Models;
 using ExploradorDeArchivos.Processing;
 using ExploradorDeArchivos.Visualization;
 using System.Data;
+using System.Drawing;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using System.Xml;
+using Color = System.Drawing.Color;
+using Font = System.Drawing.Font;
 
 namespace ExploradorDeArchivos
 {
@@ -183,28 +188,30 @@ namespace ExploradorDeArchivos
             {
                 string catField = stringFields[0];
                 string valField = numericFields[0];
+                bool useAvg = DataProcessor.IsAveragingField(valField);
 
-                var summed = DataProcessor.DynamicGroupSum(
-                    _allItems, catField, valField);
-                sb.AppendLine($"=== SUMA DE {valField.ToUpper()} POR " +
-                              $"{catField.ToUpper()} (Dictionary) " +
-                              new string('=', 10));
-                foreach (var kv in summed)
-                    sb.AppendLine($"  {kv.Key,-20} {kv.Value,10:F2}");
-                sb.AppendLine();
-
-                var grouped = DataProcessor.DynamicGroupAvg(
-                    _allItems, catField, valField);
-
-                sb.AppendLine($"=== PROMEDIO DE {valField.ToUpper()} POR " +
-                              $"{catField.ToUpper()} (Dictionary) " +
-                              new string('=', 10));
-                foreach (var kv in grouped)
-                    sb.AppendLine($"  {kv.Key,-20} {kv.Value,10:F2}");
+                if (useAvg)
+                {
+                    var grouped = DataProcessor.DynamicGroupAvg(
+                        _allItems, catField, valField);
+                    sb.AppendLine($"=== PROMEDIO DE {valField.ToUpper()} POR " +
+                                  $"{catField.ToUpper()} " + new string('=', 10));
+                    foreach (var kv in grouped)
+                        sb.AppendLine($"  {kv.Key,-20} {kv.Value,10:F2}");
+                }
+                else
+                {
+                    var summed = DataProcessor.DynamicGroupSum(
+                        _allItems, catField, valField);
+                    sb.AppendLine($"=== TOTAL DE {valField.ToUpper()} POR " +
+                                  $"{catField.ToUpper()} " + new string('=', 10));
+                    foreach (var kv in summed)
+                        sb.AppendLine($"  {kv.Key,-20} {kv.Value,10:F2}");
+                }
                 sb.AppendLine();
 
                 var counts = DataProcessor.DynamicGroupCount(_allItems, catField);
-                sb.AppendLine($"=== CONTEO POR {catField.ToUpper()} (Dictionary) " +
+                sb.AppendLine($"=== CONTEO POR {catField.ToUpper()} " +
                               new string('=', 20));
                 foreach (var kv in counts)
                     sb.AppendLine($"  {kv.Key,-20} {kv.Value,5} registros");
@@ -282,6 +289,12 @@ namespace ExploradorDeArchivos
 
         private void btnImportTxt_Click(object? sender, EventArgs e) =>
             ImportFile("Archivos de texto|*.txt");
+
+        private void btnImportXlsx_Click(object? sender, EventArgs e) =>
+            ImportFile("Archivos Excel|*.xlsx");
+
+        private void btnImportDocx_Click(object? sender, EventArgs e) =>
+            ImportFile("Archivos Word|*.docx");
 
         private void btnClearData_Click(object? sender, EventArgs e)
         {
@@ -392,18 +405,14 @@ namespace ExploradorDeArchivos
 
             Cursor = Cursors.WaitCursor;
 
-            // ── Detectar automaticamente los mejores campos ────────────────
-            // Usar el ultimo lote importado para que la grafica refleje
-            // el archivo mas reciente, no la mezcla de todos los archivos.
             var itemsForChart = _lastImportedItems.Count > 0
                 ? _lastImportedItems : _allItems;
 
-            var groupedData = DataProcessor.AutoDetectChartData(
-                itemsForChart, out var catLabel, out var valLabel);
-
+            // ── Detectar hasta 4 pares categorico+numerico de calidad ──────
+            var smartPairs = DataProcessor.AutoDetectSmartPairs(itemsForChart, 4);
             var lineSeries = DataProcessor.AutoDetectLineSeries(itemsForChart);
 
-            if (groupedData.Count == 0 && lineSeries.Count == 0)
+            if (smartPairs.Count == 0 && lineSeries.Count == 0)
             {
                 Cursor = Cursors.Default;
                 MessageBox.Show(
@@ -415,24 +424,63 @@ namespace ExploradorDeArchivos
 
             tlpAutoCharts.SuspendLayout();
 
-            // ── 1. Barras ──────────────────────────────────────────────────
-            FillAutoBarChart(groupedData, catLabel, valLabel);
+            // Pares asignados a cada grafica (fallback al primero disponible)
+            var pairBar = smartPairs.Count > 0 ? smartPairs[0] : null;
+            var pairPie = smartPairs.Count > 1 ? smartPairs[1] : pairBar;
+            var pairDnut = smartPairs.Count > 2 ? smartPairs[2] : pairPie;
+            var pairLine = smartPairs.Count > 3 ? smartPairs[3] : pairBar;
 
-            // ── 2. Pastel ──────────────────────────────────────────────────
-            FillAutoPieChart(groupedData, catLabel, valLabel);
+            // ── 1. Barras (mas categorias, mejor para comparar) ───────────
+            if (pairBar != null)
+                FillAutoBarChart(pairBar.GroupedData,
+                    pairBar.CategoryField, pairBar.ValueField, pairBar.AggregationLabel);
+            else
+                ResetChart(chartAutoBar);
 
-            // ── 3. Anillo ──────────────────────────────────────────────────
-            FillAutoDoughnutChart(groupedData, catLabel, valLabel);
+            // ── 2. Pastel (pocas categorias, proporciones) ────────────────
+            if (pairPie != null)
+                FillAutoPieChart(pairPie.GroupedData,
+                    pairPie.CategoryField, pairPie.ValueField, pairPie.AggregationLabel);
+            else
+                ResetChart(chartAutoPie);
 
-            // ── 4. Lineas ──────────────────────────────────────────────────
-            FillAutoLineChart(lineSeries);
+            // ── 3. Anillo (variante del pastel, diferente campo) ──────────
+            if (pairDnut != null)
+                FillAutoDoughnutChart(pairDnut.GroupedData,
+                    pairDnut.CategoryField, pairDnut.ValueField, pairDnut.AggregationLabel);
+            else
+                ResetChart(chartAutoDoughnut);
+
+            // ── 4. Lineas (series numericas o ranking) ────────────────────
+            if (lineSeries.Count > 0)
+            {
+                FillAutoLineChart(lineSeries);
+            }
+            else if (pairLine != null)
+            {
+                // Si no hay series temporales, grafica el ranking del par como linea
+                var rankSeries = new Dictionary<string, List<double>>();
+                var sortedVals = DataProcessor.LimitTopN(pairLine.GroupedData, MaxLinePoints);
+                var vals = new List<double>();
+                foreach (var kv in sortedVals)
+                    vals.Add(kv.Value);
+                rankSeries[$"{pairLine.AggregationLabel} {pairLine.ValueField} por {pairLine.CategoryField}"] = vals;
+                FillAutoLineChart(rankSeries);
+            }
+            else
+                ResetChart(chartAutoLine);
 
             tlpAutoCharts.ResumeLayout(true);
 
-            // Ir a la tab de graficas generadas
             tabControl.SelectedTab = tabAutoChart;
-            lblStatus.Text = $"Graficas generadas: {catLabel} → {valLabel} " +
-                             $"({groupedData.Count} categorias, {lineSeries.Count} series)";
+
+            string pairDesc = pairBar != null
+                ? $"{pairBar.CategoryField} → {pairBar.ValueField} ({pairBar.UniqueCats} cat)"
+                : "sin par";
+            lblStatus.Text = $"Graficas generadas — Barras: {pairDesc} | " +
+                             $"Pastel: {pairPie?.CategoryField ?? "-"} | " +
+                             $"Anillo: {pairDnut?.CategoryField ?? "-"} | " +
+                             $"Series: {lineSeries.Count}";
             Cursor = Cursors.Default;
         }
 
@@ -457,12 +505,10 @@ namespace ExploradorDeArchivos
             var itemsForChart = _lastImportedItems.Count > 0
                 ? _lastImportedItems : _allItems;
 
-            var groupedData = DataProcessor.AutoDetectChartData(
-                itemsForChart, out var catLabel, out var valLabel);
-
+            var smartPairs = DataProcessor.AutoDetectSmartPairs(itemsForChart, 4);
             var lineSeries = DataProcessor.AutoDetectLineSeries(itemsForChart);
 
-            if (groupedData.Count == 0 && lineSeries.Count == 0)
+            if (smartPairs.Count == 0 && lineSeries.Count == 0)
             {
                 Cursor = Cursors.Default;
                 MessageBox.Show(
@@ -471,6 +517,13 @@ namespace ExploradorDeArchivos
                     "Datos insuficientes", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+
+            // Usar el mejor par para consola
+            var bestPair = smartPairs.Count > 0 ? smartPairs[0] : null;
+            string catLabel = bestPair?.CategoryField ?? "";
+            string valLabel = bestPair?.ValueField ?? "";
+            var groupedData = bestPair?.GroupedData
+                ?? new Dictionary<string, double>();
 
             var sb = new StringBuilder();
             sb.AppendLine("╔══════════════════════════════════════════════════════════════╗");
@@ -525,7 +578,7 @@ namespace ExploradorDeArchivos
         }
 
         private void FillAutoBarChart(Dictionary<string, double> data,
-            string catLabel, string valLabel)
+            string catLabel, string valLabel, string aggLabel = "Total")
         {
             ResetChart(chartAutoBar);
 
@@ -535,7 +588,7 @@ namespace ExploradorDeArchivos
 
             var area = chartAutoBar.ChartAreas[0];
             area.AxisX.Title = catLabel;
-            area.AxisY.Title = valLabel;
+            area.AxisY.Title = $"{aggLabel} {valLabel}";
             area.AxisX.LabelStyle.Angle = -45;
             area.AxisX.LabelStyle.Font = new Font("Segoe UI", 7F);
             area.AxisX.LabelStyle.TruncatedLabels = true;
@@ -545,10 +598,10 @@ namespace ExploradorDeArchivos
 
             string titleSuffix = data.Count > MaxBarCategories
                 ? $" (Top {MaxBarCategories} de {data.Count})" : "";
-            chartAutoBar.Titles.Add($"{valLabel} por {catLabel}{titleSuffix}");
+            chartAutoBar.Titles.Add($"{aggLabel} de {valLabel} por {catLabel}{titleSuffix}");
             chartAutoBar.Titles[0].Font = new Font("Segoe UI", 9F, FontStyle.Bold);
 
-            var series = chartAutoBar.Series.Add(valLabel);
+            var series = chartAutoBar.Series.Add($"{aggLabel} {valLabel}");
             series.ChartType = SeriesChartType.Column;
             series.IsValueShownAsLabel = limited.Count <= 10;
             series.LabelFormat = "{0:F1}";
@@ -567,7 +620,7 @@ namespace ExploradorDeArchivos
         }
 
         private void FillAutoPieChart(Dictionary<string, double> data,
-            string catLabel, string valLabel)
+            string catLabel, string valLabel, string aggLabel = "Total")
         {
             ResetChart(chartAutoPie);
 
@@ -575,10 +628,10 @@ namespace ExploradorDeArchivos
 
             var limited = DataProcessor.LimitTopN(data, MaxPieSlices);
 
-            chartAutoPie.Titles.Add($"{valLabel} por {catLabel} (Pastel)");
+            chartAutoPie.Titles.Add($"{aggLabel} de {valLabel} por {catLabel} (Pastel)");
             chartAutoPie.Titles[0].Font = new Font("Segoe UI", 9F, FontStyle.Bold);
 
-            var series = chartAutoPie.Series.Add(valLabel);
+            var series = chartAutoPie.Series.Add($"{aggLabel} {valLabel}");
             series.ChartType = SeriesChartType.Pie;
             series["PieLabelStyle"] = limited.Count <= 6 ? "Outside" : "Disabled";
             series.IsValueShownAsLabel = limited.Count <= 6;
@@ -603,7 +656,7 @@ namespace ExploradorDeArchivos
         }
 
         private void FillAutoDoughnutChart(Dictionary<string, double> data,
-            string catLabel, string valLabel)
+            string catLabel, string valLabel, string aggLabel = "Total")
         {
             ResetChart(chartAutoDoughnut);
 
@@ -611,10 +664,10 @@ namespace ExploradorDeArchivos
 
             var limited = DataProcessor.LimitTopN(data, MaxPieSlices);
 
-            chartAutoDoughnut.Titles.Add($"{valLabel} por {catLabel} (Anillo)");
+            chartAutoDoughnut.Titles.Add($"{aggLabel} de {valLabel} por {catLabel} (Anillo)");
             chartAutoDoughnut.Titles[0].Font = new Font("Segoe UI", 9F, FontStyle.Bold);
 
-            var series = chartAutoDoughnut.Series.Add(valLabel);
+            var series = chartAutoDoughnut.Series.Add($"{aggLabel} {valLabel}");
             series.ChartType = SeriesChartType.Doughnut;
             series["DoughnutRadius"] = "40";
             series.IsValueShownAsLabel = limited.Count <= 6;
@@ -924,6 +977,8 @@ namespace ExploradorDeArchivos
             "XML" => Color.FromArgb(215, 245, 215),
             "TXT" => Color.FromArgb(240, 220, 255),
             "DB" => Color.FromArgb(255, 250, 210),
+            "XLSX" => Color.FromArgb(198, 239, 206),
+            "DOCX" => Color.FromArgb(189, 215, 238),
             _ => Color.White,
         };
 
@@ -960,6 +1015,88 @@ namespace ExploradorDeArchivos
         private void btnExportFileXml_Click(object? sender, EventArgs e)
             => ExportToFile("XML", "Archivos XML|*.xml", ExportItemsToXml);
 
+        private void btnExportFileXlsx_Click(object? sender, EventArgs e)
+        {
+            if (!HasData()) return;
+
+            using var dlg = new SaveFileDialog
+            {
+                Title = "Exportar datos a Excel",
+                Filter = "Archivos Excel|*.xlsx",
+                FileName = "datos_exportados"
+            };
+
+            if (dlg.ShowDialog() != DialogResult.OK) return;
+
+            try
+            {
+                Cursor = Cursors.WaitCursor;
+
+                var rows = _allItems.Select(ItemToRow).ToList();
+                var columns = DiscoverAllColumns(rows);
+
+                using var spreadsheet = SpreadsheetDocument.Create(
+                    dlg.FileName, DocumentFormat.OpenXml.SpreadsheetDocumentType.Workbook);
+
+                var workbookPart = spreadsheet.AddWorkbookPart();
+                workbookPart.Workbook = new OxlSheet.Workbook();
+
+                var worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
+                var sheetData = new OxlSheet.SheetData();
+                worksheetPart.Worksheet = new OxlSheet.Worksheet(sheetData);
+
+                var sheets = spreadsheet.WorkbookPart!.Workbook.AppendChild(
+                    new OxlSheet.Sheets());
+                sheets.AppendChild(new OxlSheet.Sheet
+                {
+                    Id = spreadsheet.WorkbookPart.GetIdOfPart(worksheetPart),
+                    SheetId = 1,
+                    Name = "Datos"
+                });
+
+                // Fila de encabezados
+                var headerRow = new OxlSheet.Row();
+                foreach (var col in columns)
+                    headerRow.AppendChild(CreateTextCell(col));
+                sheetData.AppendChild(headerRow);
+
+                // Filas de datos
+                foreach (var row in rows)
+                {
+                    var dataRow = new OxlSheet.Row();
+                    foreach (var col in columns)
+                        dataRow.AppendChild(CreateTextCell(
+                            row.TryGetValue(col, out var v) ? v : string.Empty));
+                    sheetData.AppendChild(dataRow);
+                }
+
+                workbookPart.Workbook.Save();
+                Cursor = Cursors.Default;
+
+                lblStatus.Text = $"Exportados {_allItems.Count} registros a '{Path.GetFileName(dlg.FileName)}'";
+                MessageBox.Show(
+                    $"Se exportaron {_allItems.Count} registros a:\n{dlg.FileName}",
+                    "Exportacion exitosa", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                OfrecerEnviarPorCorreo(dlg.FileName);
+            }
+            catch (Exception ex)
+            {
+                Cursor = Cursors.Default;
+                MessageBox.Show($"Error al exportar a Excel:\n\n{ex.Message}",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private static OxlSheet.Cell CreateTextCell(string text)
+        {
+            return new OxlSheet.Cell
+            {
+                DataType = OxlSheet.CellValues.InlineString,
+                InlineString = new OxlSheet.InlineString(
+                    new OxlSheet.Text(text))
+            };
+        }
+
         private void btnExportFileCsv_Click(object? sender, EventArgs e)
         {
             if (!HasData()) return;
@@ -976,7 +1113,7 @@ namespace ExploradorDeArchivos
             try
             {
                 Cursor = Cursors.WaitCursor;
-                
+
                 // Usar DataExporter para exportar a CSV de forma simple
                 var rows = new List<Dictionary<string, string>>(_allItems.Count);
                 foreach (var item in _allItems)
@@ -1007,6 +1144,7 @@ namespace ExploradorDeArchivos
                 MessageBox.Show(
                     $"Se exportaron {_allItems.Count} registros a:\n{dlg.FileName}",
                     "Exportacion exitosa", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                OfrecerEnviarPorCorreo(dlg.FileName);
             }
             catch (Exception ex)
             {
@@ -1038,6 +1176,7 @@ namespace ExploradorDeArchivos
                 MessageBox.Show(
                     $"Se exportaron {_allItems.Count} registros a:\n{dlg.FileName}",
                     "Exportacion exitosa", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                OfrecerEnviarPorCorreo(dlg.FileName);
             }
             catch (Exception ex)
             {
@@ -1188,6 +1327,25 @@ namespace ExploradorDeArchivos
             if (result.Length == 0 || !char.IsLetter(result[0]) && result[0] != '_')
                 result = "_" + result;
             return result;
+        }
+
+        // ════════════════════════════════════════════════════════════════════
+        //  CORREO ELECTRONICO
+        // ════════════════════════════════════════════════════════════════════
+
+        private void OfrecerEnviarPorCorreo(string rutaArchivo)
+        {
+            var respuesta = MessageBox.Show(
+                $"¿Deseas enviar el archivo exportado por correo electrónico?\n\nÐ Adjunto: {Path.GetFileName(rutaArchivo)}",
+                "Enviar por correo",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (respuesta == DialogResult.Yes)
+            {
+                using var formCorreo = new FormCorreoEnvio(rutaArchivo);
+                formCorreo.ShowDialog(this);
+            }
         }
     }
 }

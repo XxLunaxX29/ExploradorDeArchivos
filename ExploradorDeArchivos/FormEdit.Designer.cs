@@ -1,4 +1,5 @@
 ﻿using System.Windows.Forms;
+using Microsoft.Web.WebView2.WinForms;
 
 namespace ExploradorDeArchivos
 {
@@ -24,97 +25,165 @@ namespace ExploradorDeArchivos
             splitter = new SplitContainer();
             dgvDatos = new DataGridView();
             rtbContenido = new RichTextBox();
-            
+            webViewPdf = new WebView2();
             pnlTop.SuspendLayout();
             pnlControles.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitter).BeginInit();
+            splitter.Panel1.SuspendLayout();
+            splitter.Panel2.SuspendLayout();
             splitter.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvDatos).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)webViewPdf).BeginInit();
             SuspendLayout();
-
+            // 
             // pnlTop
-            pnlTop.BackColor = System.Drawing.Color.FromArgb(30, 30, 50);
+            // 
+            pnlTop.BackColor = Color.FromArgb(30, 30, 50);
             pnlTop.Controls.Add(lblTitulo);
             pnlTop.Controls.Add(lblEstado);
             pnlTop.Dock = DockStyle.Top;
-            pnlTop.Height = 60;
+            pnlTop.Location = new Point(0, 0);
+            pnlTop.Name = "pnlTop";
             pnlTop.Padding = new Padding(10);
-
-            lblTitulo.Text = "Editor de Archivos";
-            lblTitulo.ForeColor = System.Drawing.Color.White;
-            lblTitulo.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+            pnlTop.Size = new Size(1732, 60);
+            pnlTop.TabIndex = 2;
+            // 
+            // lblTitulo
+            // 
             lblTitulo.AutoSize = true;
-            lblTitulo.Location = new System.Drawing.Point(10, 10);
-
-            lblEstado.Text = "Listo";
-            lblEstado.ForeColor = System.Drawing.Color.LightGreen;
-            lblEstado.Font = new System.Drawing.Font("Segoe UI", 9F);
-            lblEstado.AutoSize = true;
+            lblTitulo.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
+            lblTitulo.ForeColor = Color.White;
+            lblTitulo.Location = new Point(10, 10);
+            lblTitulo.Name = "lblTitulo";
+            lblTitulo.Size = new Size(224, 32);
+            lblTitulo.TabIndex = 0;
+            lblTitulo.Text = "Editor de Archivos";
+            // 
+            // lblEstado
+            // 
             lblEstado.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            lblEstado.Location = new System.Drawing.Point(400, 15);
-
+            lblEstado.AutoSize = true;
+            lblEstado.Font = new Font("Segoe UI", 9F);
+            lblEstado.ForeColor = Color.LightGreen;
+            lblEstado.Location = new Point(1932, 15);
+            lblEstado.Name = "lblEstado";
+            lblEstado.Size = new Size(40, 20);
+            lblEstado.TabIndex = 1;
+            lblEstado.Text = "Listo";
+            // 
             // pnlControles
-            pnlControles.BackColor = System.Drawing.Color.FromArgb(45, 45, 68);
+            // 
+            pnlControles.BackColor = Color.FromArgb(45, 45, 68);
             pnlControles.Controls.Add(btnCargar);
             pnlControles.Controls.Add(btnGuardar);
             pnlControles.Dock = DockStyle.Top;
-            pnlControles.Height = 50;
+            pnlControles.Location = new Point(0, 60);
+            pnlControles.Name = "pnlControles";
             pnlControles.Padding = new Padding(10);
-
-            btnCargar.Text = " Cargar Archivo";
-            btnCargar.BackColor = System.Drawing.Color.FromArgb(0, 120, 215);
-            btnCargar.ForeColor = System.Drawing.Color.White;
+            pnlControles.Size = new Size(1732, 50);
+            pnlControles.TabIndex = 1;
+            // 
+            // btnCargar
+            // 
+            btnCargar.BackColor = Color.FromArgb(0, 120, 215);
             btnCargar.FlatStyle = FlatStyle.Flat;
-            btnCargar.Size = new System.Drawing.Size(150, 32);
-            btnCargar.Location = new System.Drawing.Point(10, 9);
+            btnCargar.ForeColor = Color.White;
+            btnCargar.Location = new Point(10, 9);
+            btnCargar.Name = "btnCargar";
+            btnCargar.Size = new Size(150, 32);
+            btnCargar.TabIndex = 0;
+            btnCargar.Text = " Cargar Archivo";
+            btnCargar.UseVisualStyleBackColor = false;
             btnCargar.Click += btnCargar_Click;
-
-            btnGuardar.Text = " Guardar Cambios";
-            btnGuardar.BackColor = System.Drawing.Color.FromArgb(16, 137, 62);
-            btnGuardar.ForeColor = System.Drawing.Color.White;
+            // 
+            // btnGuardar
+            // 
+            btnGuardar.BackColor = Color.FromArgb(16, 137, 62);
             btnGuardar.FlatStyle = FlatStyle.Flat;
-            btnGuardar.Size = new System.Drawing.Size(150, 32);
-            btnGuardar.Location = new System.Drawing.Point(170, 9);
+            btnGuardar.ForeColor = Color.White;
+            btnGuardar.Location = new Point(170, 9);
+            btnGuardar.Name = "btnGuardar";
+            btnGuardar.Size = new Size(150, 32);
+            btnGuardar.TabIndex = 1;
+            btnGuardar.Text = " Guardar Cambios";
+            btnGuardar.UseVisualStyleBackColor = false;
             btnGuardar.Click += btnGuardar_Click;
-
+            // 
             // splitter
+            // 
             splitter.Dock = DockStyle.Fill;
-            splitter.SplitterDistance = 400;
-            splitter.Orientation = Orientation.Vertical;
+            splitter.Location = new Point(0, 110);
+            splitter.Name = "splitter";
+            // 
+            // splitter.Panel1
+            // 
             splitter.Panel1.Controls.Add(dgvDatos);
+            // 
+            // splitter.Panel2
+            // 
             splitter.Panel2.Controls.Add(rtbContenido);
-
+            splitter.Panel2.Controls.Add(webViewPdf);
+            splitter.Size = new Size(1732, 590);
+            splitter.SplitterDistance = 883;
+            splitter.TabIndex = 0;
+            // 
             // dgvDatos
-            dgvDatos.Dock = DockStyle.Fill;
-            dgvDatos.AllowUserToAddRows = true;
-            dgvDatos.AllowUserToDeleteRows = true;
-            dgvDatos.ReadOnly = false;
-            dgvDatos.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            // 
             dgvDatos.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
-
+            dgvDatos.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvDatos.Dock = DockStyle.Fill;
+            dgvDatos.Location = new Point(0, 0);
+            dgvDatos.Name = "dgvDatos";
+            dgvDatos.RowHeadersWidth = 51;
+            dgvDatos.Size = new Size(883, 590);
+            dgvDatos.TabIndex = 0;
+            // 
             // rtbContenido
+            // 
+            rtbContenido.BackColor = Color.FromArgb(30, 30, 30);
+            rtbContenido.BorderStyle = BorderStyle.None;
             rtbContenido.Dock = DockStyle.Fill;
-            rtbContenido.Font = new System.Drawing.Font("Consolas", 10F);
-            rtbContenido.ReadOnly = false;
-            rtbContenido.WordWrap = true;
-
+            rtbContenido.Font = new Font("Consolas", 11F);
+            rtbContenido.ForeColor = Color.FromArgb(220, 220, 220);
+            rtbContenido.Location = new Point(0, 0);
+            rtbContenido.Name = "rtbContenido";
+            rtbContenido.Size = new Size(845, 590);
+            rtbContenido.TabIndex = 0;
+            rtbContenido.Text = "";
+            // 
+            // webViewPdf
+            // 
+            webViewPdf.AllowExternalDrop = true;
+            webViewPdf.CreationProperties = null;
+            webViewPdf.DefaultBackgroundColor = Color.White;
+            webViewPdf.Dock = DockStyle.Fill;
+            webViewPdf.Location = new Point(0, 0);
+            webViewPdf.Name = "webViewPdf";
+            webViewPdf.Size = new Size(845, 590);
+            webViewPdf.TabIndex = 1;
+            webViewPdf.Visible = false;
+            webViewPdf.ZoomFactor = 1D;
+            // 
             // FormEdit
-            AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
+            // 
+            AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(1000, 700);
+            ClientSize = new Size(1732, 700);
             Controls.Add(splitter);
             Controls.Add(pnlControles);
             Controls.Add(pnlTop);
             Name = "FormEdit";
-            Text = "Editor de Archivos";
             StartPosition = FormStartPosition.CenterScreen;
-
+            Text = "Editor de Archivos";
             pnlTop.ResumeLayout(false);
             pnlTop.PerformLayout();
             pnlControles.ResumeLayout(false);
+            splitter.Panel1.ResumeLayout(false);
+            splitter.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitter).EndInit();
             splitter.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dgvDatos).EndInit();
+            ((System.ComponentModel.ISupportInitialize)webViewPdf).EndInit();
             ResumeLayout(false);
         }
 
@@ -127,5 +196,6 @@ namespace ExploradorDeArchivos
         private SplitContainer splitter;
         public DataGridView dgvDatos;
         public RichTextBox rtbContenido;
+        public WebView2 webViewPdf;
     }
 }

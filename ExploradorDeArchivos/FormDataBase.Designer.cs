@@ -47,6 +47,8 @@ namespace ExploradorDeArchivos
             btnImportXml = new Button();
             btnImportJson = new Button();
             btnImportCsv = new Button();
+            btnImportXlsx = new Button();
+            btnImportDocx = new Button();
             lblImport = new Label();
             pnlExport = new Panel();
             btnExportPostgre = new Button();
@@ -57,6 +59,7 @@ namespace ExploradorDeArchivos
             btnExportFileTxt = new Button();
             btnExportFileXml = new Button();
             btnExportFileCsv = new Button();
+            btnExportFileXlsx = new Button();
             pnlTop.SuspendLayout();
             tabControl.SuspendLayout();
             tabData.SuspendLayout();
@@ -204,10 +207,10 @@ namespace ExploradorDeArchivos
             // cmbSourceFilter
             // 
             cmbSourceFilter.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbSourceFilter.Items.AddRange(new object[] { "Todas", "CSV", "JSON", "XML", "TXT", "DB" });
+            cmbSourceFilter.Items.AddRange(new object[] { "Todas", "CSV", "JSON", "XML", "TXT", "DB", "XLSX", "DOCX" });
             cmbSourceFilter.Location = new Point(130, 7);
             cmbSourceFilter.Name = "cmbSourceFilter";
-            cmbSourceFilter.Size = new Size(120, 28);
+            cmbSourceFilter.Size = new Size(140, 28);
             cmbSourceFilter.TabIndex = 1;
             cmbSourceFilter.SelectedIndexChanged += cmbSourceFilter_SelectedIndexChanged;
             // 
@@ -312,6 +315,8 @@ namespace ExploradorDeArchivos
             pnlFiles.Controls.Add(btnImportXml);
             pnlFiles.Controls.Add(btnImportJson);
             pnlFiles.Controls.Add(btnImportCsv);
+            pnlFiles.Controls.Add(btnImportXlsx);
+            pnlFiles.Controls.Add(btnImportDocx);
             pnlFiles.Controls.Add(lblImport);
             pnlFiles.Dock = DockStyle.Top;
             pnlFiles.Location = new Point(0, 55);
@@ -325,7 +330,7 @@ namespace ExploradorDeArchivos
             btnChartConsole.FlatStyle = FlatStyle.Flat;
             btnChartConsole.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             btnChartConsole.ForeColor = Color.White;
-            btnChartConsole.Location = new Point(1139, 8);
+            btnChartConsole.Location = new Point(1318, 8);
             btnChartConsole.Name = "btnChartConsole";
             btnChartConsole.Size = new Size(145, 28);
             btnChartConsole.TabIndex = 0;
@@ -339,7 +344,7 @@ namespace ExploradorDeArchivos
             btnGenerateChart.FlatStyle = FlatStyle.Flat;
             btnGenerateChart.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             btnGenerateChart.ForeColor = Color.White;
-            btnGenerateChart.Location = new Point(971, 8);
+            btnGenerateChart.Location = new Point(1150, 8);
             btnGenerateChart.Name = "btnGenerateChart";
             btnGenerateChart.Size = new Size(155, 28);
             btnGenerateChart.TabIndex = 1;
@@ -352,7 +357,7 @@ namespace ExploradorDeArchivos
             btnClearData.BackColor = Color.FromArgb(180, 30, 30);
             btnClearData.FlatStyle = FlatStyle.Flat;
             btnClearData.ForeColor = Color.White;
-            btnClearData.Location = new Point(875, 8);
+            btnClearData.Location = new Point(1055, 8);
             btnClearData.Name = "btnClearData";
             btnClearData.Size = new Size(85, 28);
             btnClearData.TabIndex = 2;
@@ -365,7 +370,7 @@ namespace ExploradorDeArchivos
             btnImportPostgre.BackColor = Color.FromArgb(51, 103, 145);
             btnImportPostgre.FlatStyle = FlatStyle.Flat;
             btnImportPostgre.ForeColor = Color.White;
-            btnImportPostgre.Location = new Point(710, 8);
+            btnImportPostgre.Location = new Point(890, 8);
             btnImportPostgre.Name = "btnImportPostgre";
             btnImportPostgre.Size = new Size(152, 28);
             btnImportPostgre.TabIndex = 10;
@@ -378,7 +383,7 @@ namespace ExploradorDeArchivos
             btnImportMariaDb.BackColor = Color.FromArgb(0, 108, 133);
             btnImportMariaDb.FlatStyle = FlatStyle.Flat;
             btnImportMariaDb.ForeColor = Color.White;
-            btnImportMariaDb.Location = new Point(595, 8);
+            btnImportMariaDb.Location = new Point(775, 8);
             btnImportMariaDb.Name = "btnImportMariaDb";
             btnImportMariaDb.Size = new Size(105, 28);
             btnImportMariaDb.TabIndex = 9;
@@ -391,7 +396,7 @@ namespace ExploradorDeArchivos
             btnImportSqlServer.BackColor = Color.FromArgb(204, 48, 43);
             btnImportSqlServer.FlatStyle = FlatStyle.Flat;
             btnImportSqlServer.ForeColor = Color.White;
-            btnImportSqlServer.Location = new Point(480, 8);
+            btnImportSqlServer.Location = new Point(660, 8);
             btnImportSqlServer.Name = "btnImportSqlServer";
             btnImportSqlServer.Size = new Size(105, 28);
             btnImportSqlServer.TabIndex = 8;
@@ -411,6 +416,32 @@ namespace ExploradorDeArchivos
             btnImportTxt.Text = "TXT";
             btnImportTxt.UseVisualStyleBackColor = false;
             btnImportTxt.Click += btnImportTxt_Click;
+            // 
+            // btnImportXlsx
+            // 
+            btnImportXlsx.BackColor = Color.FromArgb(16, 124, 65);
+            btnImportXlsx.FlatStyle = FlatStyle.Flat;
+            btnImportXlsx.ForeColor = Color.White;
+            btnImportXlsx.Location = new Point(480, 8);
+            btnImportXlsx.Name = "btnImportXlsx";
+            btnImportXlsx.Size = new Size(80, 28);
+            btnImportXlsx.TabIndex = 11;
+            btnImportXlsx.Text = "📥 Excel";
+            btnImportXlsx.UseVisualStyleBackColor = false;
+            btnImportXlsx.Click += btnImportXlsx_Click;
+            // 
+            // btnImportDocx
+            // 
+            btnImportDocx.BackColor = Color.FromArgb(43, 87, 154);
+            btnImportDocx.FlatStyle = FlatStyle.Flat;
+            btnImportDocx.ForeColor = Color.White;
+            btnImportDocx.Location = new Point(570, 8);
+            btnImportDocx.Name = "btnImportDocx";
+            btnImportDocx.Size = new Size(80, 28);
+            btnImportDocx.TabIndex = 12;
+            btnImportDocx.Text = "📥 Word";
+            btnImportDocx.UseVisualStyleBackColor = false;
+            btnImportDocx.Click += btnImportDocx_Click;
             // 
             // btnImportXml
             // 
@@ -472,6 +503,7 @@ namespace ExploradorDeArchivos
             pnlExport.Controls.Add(btnExportPostgre);
             pnlExport.Controls.Add(btnExportMariaDb);
             pnlExport.Controls.Add(btnExportSql);
+            pnlExport.Controls.Add(btnExportFileXlsx);
             pnlExport.Controls.Add(lblExport);
             pnlExport.Dock = DockStyle.Top;
             pnlExport.Location = new Point(0, 100);
@@ -581,6 +613,19 @@ namespace ExploradorDeArchivos
             btnExportFileCsv.UseVisualStyleBackColor = false;
             btnExportFileCsv.Click += btnExportFileCsv_Click;
             // 
+            // btnExportFileXlsx
+            // 
+            btnExportFileXlsx.BackColor = Color.FromArgb(16, 124, 65);
+            btnExportFileXlsx.FlatStyle = FlatStyle.Flat;
+            btnExportFileXlsx.ForeColor = Color.White;
+            btnExportFileXlsx.Location = new Point(1015, 7);
+            btnExportFileXlsx.Name = "btnExportFileXlsx";
+            btnExportFileXlsx.Size = new Size(105, 28);
+            btnExportFileXlsx.TabIndex = 8;
+            btnExportFileXlsx.Text = "📤 Excel";
+            btnExportFileXlsx.UseVisualStyleBackColor = false;
+            btnExportFileXlsx.Click += btnExportFileXlsx_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
@@ -628,6 +673,8 @@ namespace ExploradorDeArchivos
         private Button btnImportMariaDb;
         private Button btnImportPostgre;
         private Button btnChartConsole;
+        private Button btnImportXlsx;
+        private Button btnImportDocx;
         private Label lblStatus;
 
         private TabControl tabControl;
@@ -656,5 +703,6 @@ namespace ExploradorDeArchivos
         private Button btnExportFileTxt;
         private Button btnExportFileXml;
         private Button btnExportFileCsv;
+        private Button btnExportFileXlsx;
     }
 }

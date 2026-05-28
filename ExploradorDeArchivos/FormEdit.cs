@@ -1,14 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Xml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
+using Microsoft.Web.WebView2.WinForms;
 
 namespace ExploradorDeArchivos
 {
@@ -46,7 +49,7 @@ namespace ExploradorDeArchivos
             using var dlg = new OpenFileDialog
             {
                 Title = "Abrir archivo para editar",
-                Filter = "Archivos soportados (*.csv;*.xlsx;*.xls;*.docx;*.doc;*.pptx;*.ppt;*.txt;*.json;*.xml)|*.csv;*.xlsx;*.xls;*.docx;*.doc;*.pptx;*.ppt;*.txt;*.json;*.xml|" +
+                Filter = "Archivos soportados (*.csv;*.xlsx;*.xls;*.docx;*.doc;*.pptx;*.ppt;*.txt;*.json;*.xml;*.pdf)|*.csv;*.xlsx;*.xls;*.docx;*.doc;*.pptx;*.ppt;*.txt;*.json;*.xml;*.pdf|" +
                          "Archivos CSV (*.csv)|*.csv|" +
                          "Archivos Excel (*.xlsx;*.xls)|*.xlsx;*.xls|" +
                          "Archivos Word (*.docx;*.doc)|*.docx;*.doc|" +
@@ -54,6 +57,7 @@ namespace ExploradorDeArchivos
                          "Archivos de Texto (*.txt)|*.txt|" +
                          "Archivos JSON (*.json)|*.json|" +
                          "Archivos XML (*.xml)|*.xml|" +
+                         "Archivos PDF (*.pdf)|*.pdf|" +
                          "Todos los archivos (*.*)|*.*"
             };
 
@@ -80,6 +84,8 @@ namespace ExploradorDeArchivos
                     CargarJSON();
                 else if (ext == ".xml")
                     CargarXML();
+                else if (ext == ".pdf")
+                    CargarPDF();
 
                 this.Text = $"Editor - {Path.GetFileName(_currentFile)}";
                 Cursor = Cursors.Default;
@@ -102,6 +108,7 @@ namespace ExploradorDeArchivos
             dgvDatos.Rows.Clear();
             dgvDatos.Columns.Clear();
             rtbContenido.Clear();
+            MostrarTextBox();
 
             var lines = File.ReadAllLines(_currentFile);
             if (lines.Length == 0) return;
@@ -130,6 +137,7 @@ namespace ExploradorDeArchivos
             dgvDatos.Rows.Clear();
             dgvDatos.Columns.Clear();
             rtbContenido.Clear();
+            MostrarTextBox();
 
             try
             {
@@ -141,7 +149,7 @@ namespace ExploradorDeArchivos
 
                     // Obtener valores de celdas
                     var rows = sheetData.Elements<Row>().ToList();
-                    
+
                     if (rows.Count == 0)
                     {
                         lblEstado.Text = "⚠ El archivo Excel está vacío";
@@ -191,6 +199,7 @@ namespace ExploradorDeArchivos
             dgvDatos.Rows.Clear();
             dgvDatos.Columns.Clear();
             rtbContenido.Clear();
+            MostrarTextBox();
 
             try
             {
@@ -212,6 +221,7 @@ namespace ExploradorDeArchivos
             dgvDatos.Rows.Clear();
             dgvDatos.Columns.Clear();
             rtbContenido.Clear();
+            MostrarTextBox();
 
             try
             {
@@ -233,8 +243,12 @@ namespace ExploradorDeArchivos
             dgvDatos.Rows.Clear();
             dgvDatos.Columns.Clear();
             rtbContenido.Clear();
+            MostrarTextBox();
 
             var content = File.ReadAllText(_currentFile, Encoding.UTF8);
+            rtbContenido.Font = new System.Drawing.Font("Consolas", 11F);
+            rtbContenido.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
+            rtbContenido.BackColor = System.Drawing.Color.FromArgb(30, 30, 30);
             rtbContenido.Text = content;
             lblEstado.Text = $"✓ Archivo de texto cargado";
         }
@@ -246,9 +260,14 @@ namespace ExploradorDeArchivos
             dgvDatos.Rows.Clear();
             dgvDatos.Columns.Clear();
             rtbContenido.Clear();
+            MostrarTextBox();
 
             var content = File.ReadAllText(_currentFile, Encoding.UTF8);
+            rtbContenido.Font = new System.Drawing.Font("Consolas", 11F);
+            rtbContenido.BackColor = System.Drawing.Color.FromArgb(30, 30, 30);
+            rtbContenido.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
             rtbContenido.Text = content;
+            AplicarColoreado_JSON();
             lblEstado.Text = $"✓ Archivo JSON cargado";
         }
 
@@ -259,10 +278,31 @@ namespace ExploradorDeArchivos
             dgvDatos.Rows.Clear();
             dgvDatos.Columns.Clear();
             rtbContenido.Clear();
+            MostrarTextBox();
 
             var content = File.ReadAllText(_currentFile, Encoding.UTF8);
+            rtbContenido.Font = new System.Drawing.Font("Consolas", 11F);
+            rtbContenido.BackColor = System.Drawing.Color.FromArgb(30, 30, 30);
+            rtbContenido.ForeColor = System.Drawing.Color.FromArgb(220, 220, 220);
             rtbContenido.Text = content;
+            AplicarColoreado_XML();
             lblEstado.Text = $"✓ Archivo XML cargado";
+        }
+
+        private async void CargarPDF()
+        {
+            _currentFileType = "PDF";
+            dgvDatos.DataSource = null;
+            dgvDatos.Rows.Clear();
+            dgvDatos.Columns.Clear();
+            rtbContenido.Clear();
+
+            rtbContenido.Visible = false;
+            webViewPdf.Visible = true;
+
+            await webViewPdf.EnsureCoreWebView2Async();
+            webViewPdf.CoreWebView2.Navigate(new Uri(_currentFile).AbsoluteUri);
+            lblEstado.Text = $"✓ Archivo PDF cargado (solo visualización)";
         }
 
         // ════════════════════════════════════════════════════════════════════
@@ -289,6 +329,8 @@ namespace ExploradorDeArchivos
                     GuardarWord();
                 else if (_currentFileType == "POWERPOINT")
                     MessageBox.Show("PowerPoint no se puede editar en modo texto. Por favor, usa Microsoft PowerPoint.", "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                else if (_currentFileType == "PDF")
+                    MessageBox.Show("Los archivos PDF son de solo visualización y no se pueden editar aquí.", "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 else if (_currentFileType == "TXT" || _currentFileType == "JSON" || _currentFileType == "XML")
                     GuardarTexto();
 
@@ -359,7 +401,7 @@ namespace ExploradorDeArchivos
                         throw new Exception("El archivo Excel no tiene estructura válida");
 
                     WorkbookPart workbookPart = doc.WorkbookPart;
-                    
+
                     if (!workbookPart.WorksheetParts.Any())
                         throw new Exception("El archivo Excel no tiene hojas de cálculo");
 
@@ -522,13 +564,13 @@ namespace ExploradorDeArchivos
 
                         // Crear párrafos nuevos
                         var lines = rtbContenido.Text.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
-                        
+
                         foreach (var line in lines)
                         {
                             var pElement = xmlDoc.CreateElement("w:p", "http://schemas.openxmlformats.org/wordprocessingml/2006/main");
                             var rElement = xmlDoc.CreateElement("w:r", "http://schemas.openxmlformats.org/wordprocessingml/2006/main");
                             var tElement = xmlDoc.CreateElement("w:t", "http://schemas.openxmlformats.org/wordprocessingml/2006/main");
-                            
+
 
                             tElement.InnerText = line;
                             rElement.AppendChild(tElement);
@@ -538,7 +580,7 @@ namespace ExploradorDeArchivos
 
                         // Eliminar entrada antigua
                         docEntry.Delete();
-                        
+
                         // Crear entrada nueva
                         var newEntry = archive.CreateEntry("word/document.xml");
                         using (var entryStream = newEntry.Open())
@@ -588,6 +630,56 @@ namespace ExploradorDeArchivos
         }
 
         // ════════════════════════════════════════════════════════════════════
+        //  HELPERS DE VISUALIZACIÓN
+        // ════════════════════════════════════════════════════════════════════
+
+        private void MostrarTextBox()
+        {
+            rtbContenido.Visible = true;
+            webViewPdf.Visible = false;
+        }
+
+        private void AplicarColoreado_JSON()
+        {
+            rtbContenido.SuspendLayout();
+            // Llaves y corchetes
+            ColorearPatron(@"[{}\[\]]", System.Drawing.Color.FromArgb(255, 200, 50));
+            // Strings (claves y valores)
+            ColorearPatron(@"\""[^\""]*\""", System.Drawing.Color.FromArgb(100, 220, 100));
+            // Números
+            ColorearPatron(@"(?<=:\s*)-?\d+(\.\d+)?", System.Drawing.Color.FromArgb(100, 180, 255));
+            // true / false / null
+            ColorearPatron(@"\b(true|false|null)\b", System.Drawing.Color.FromArgb(220, 120, 60));
+            rtbContenido.ResumeLayout();
+        }
+
+        private void AplicarColoreado_XML()
+        {
+            rtbContenido.SuspendLayout();
+            // Etiquetas
+            ColorearPatron(@"<[^>]+>", System.Drawing.Color.FromArgb(86, 156, 214));
+            // Atributos
+            ColorearPatron(@"\b[\w:-]+=", System.Drawing.Color.FromArgb(156, 220, 254));
+            // Valores de atributos
+            ColorearPatron(@"=\""[^\""]*\""", System.Drawing.Color.FromArgb(206, 145, 120));
+            // Comentarios
+            ColorearPatron(@"<!--.*?-->", System.Drawing.Color.FromArgb(106, 153, 85));
+            rtbContenido.ResumeLayout();
+        }
+
+        private void ColorearPatron(string patron, System.Drawing.Color color)
+        {
+            var text = rtbContenido.Text;
+            foreach (Match m in Regex.Matches(text, patron, RegexOptions.Singleline))
+            {
+                rtbContenido.Select(m.Index, m.Length);
+                rtbContenido.SelectionColor = color;
+            }
+            rtbContenido.SelectionStart = 0;
+            rtbContenido.SelectionLength = 0;
+        }
+
+        // ════════════════════════════════════════════════════════════════════
         //  HELPERS
         // ════════════════════════════════════════════════════════════════════
 
@@ -620,10 +712,10 @@ namespace ExploradorDeArchivos
                     using var stream = entry.Open();
                     using var reader = new StreamReader(stream);
                     var xml = reader.ReadToEnd();
-                    
+
                     var doc = new XmlDocument();
                     doc.LoadXml(xml);
-                    
+
                     var textNodes = doc.GetElementsByTagName("w:t");
                     var sb = new StringBuilder();
                     foreach (XmlNode node in textNodes)
@@ -652,10 +744,10 @@ namespace ExploradorDeArchivos
                     using var stream = entry.Open();
                     using var reader = new StreamReader(stream);
                     var xml = reader.ReadToEnd();
-                    
+
                     var doc = new XmlDocument();
                     doc.LoadXml(xml);
-                    
+
                     sb.AppendLine($"--- Diapositiva {slideNum} ---");
                     var textNodes = doc.GetElementsByTagName("a:t");
                     foreach (XmlNode node in textNodes)

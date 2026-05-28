@@ -46,6 +46,7 @@ namespace ExploradorDeArchivos
             btnllamarFormDataBase = new Button();
             btnllamarFormCorrector = new Button();
             btnLlamarEditor = new Button();
+            btnFormGrabador = new Button();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dataGridView2).BeginInit();
             panelQuickAccess.SuspendLayout();
@@ -194,11 +195,22 @@ namespace ExploradorDeArchivos
             btnLlamarEditor.UseVisualStyleBackColor = true;
             btnLlamarEditor.Click += btnLlamarEditor_Click;
             // 
+            // btnFormGrabador
+            // 
+            btnFormGrabador.Location = new Point(871, 37);
+            btnFormGrabador.Name = "btnFormGrabador";
+            btnFormGrabador.Size = new Size(142, 28);
+            btnFormGrabador.TabIndex = 18;
+            btnFormGrabador.Text = "Form Grabador";
+            btnFormGrabador.UseVisualStyleBackColor = true;
+            btnFormGrabador.Click += btnFormGrabador_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1173, 637);
+            Controls.Add(btnFormGrabador);
             Controls.Add(btnLlamarEditor);
             Controls.Add(btnllamarFormCorrector);
             Controls.Add(btnllamarFormDataBase);
@@ -237,5 +249,6 @@ namespace ExploradorDeArchivos
         private Button btnllamarFormDataBase;
         private Button btnllamarFormCorrector;
         private Button btnLlamarEditor;
+        private Button btnFormGrabador;
     }
 }
